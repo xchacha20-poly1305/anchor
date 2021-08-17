@@ -12,28 +12,16 @@ import (
 	"time"
 )
 
-var tun2socks *Tun2socks
-var eventListener *api.EventListener
-var sigCh chan os.Signal
-
 func main() {
 	log.SetLevel(log.InfoLevel)
 
 	conn, err := net.ListenUDP("udp", nil)
 	must(err)
 
-	eventListener, err := api.NewEventListener(func(event *api.Event) {
-		switch event.EventType {
-		case api.EventClose:
-			log.Infof("close signal received")
-			sigCh <- syscall.SIGINT
-		}
-	})
-
 	deviceName, err := os.Hostname()
 	must(err)
 
-	query, err := api.MakeQuery(api.Query{DeviceName: deviceName, ListenerPort: eventListener.LocalPort()})
+	query, err := api.MakeQuery(api.Query{Version: api.Version, DeviceName: deviceName})
 	must(err)
 
 	_, err = api.ParseQuery(query)
@@ -52,6 +40,7 @@ func main() {
 		log.Fatalf("no device found")
 	}
 	must(err)
+	must(conn.Close())
 
 	response, err := api.ParseResponse(buffer[:length])
 	must(err)
@@ -64,14 +53,14 @@ func main() {
 	}
 
 	log.Infof("socks port: %d", response.SocksPort)
-	log.Infof("dns port: : %d", response.DnsPort)
+	log.Infof("dns port: %d", response.DnsPort)
 	log.Infof("enable log: %v", response.Debug)
 
-	tun2socks, err = NewTun2socks(tunName, addr.IP.String(), int(response.SocksPort), int(response.DnsPort), response.Debug)
+	tun2socks, err := NewTun2socks(tunName, addr.IP.String(), int(response.SocksPort), int(response.DnsPort), response.Debug)
 	must(err)
 	tun2socks.Start()
 
-	cmd, err := addRoute(tunName)
+	cmd, err := addRoute(tunName, response.BypassLan)
 	if err != nil {
 		tun2socks.Close()
 		log.Fatalf("add route failed: %s: %v\n", cmd, err)
@@ -79,11 +68,12 @@ func main() {
 
 	log.Infof("%s started", tunName)
 
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-	<-sigCh
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+	<-stop
 
-	destroy()
+	log.SetLevel(log.InfoLevel)
+	tun2socks.Close()
 	log.Infof("closed")
 }
 
@@ -103,14 +93,5 @@ func execShell(name string, arg ...string) (cmd string, err error) {
 func must(err error) {
 	if err != nil {
 		log.Fatalf("%v", err)
-	}
-}
-
-func destroy() {
-	if tun2socks != nil {
-		tun2socks.Close()
-	}
-	if eventListener != nil {
-		eventListener.Close()
 	}
 }

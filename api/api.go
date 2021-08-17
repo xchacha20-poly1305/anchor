@@ -3,44 +3,43 @@ package api
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/ulikunitz/xz"
 	"io/ioutil"
 )
 
+const Version = 0
+
 type Query struct {
-	DeviceName   string
-	ListenerPort uint16
+	Version    uint8
+	DeviceName string
 }
 
 type Response struct {
+	Version    uint8
 	SocksPort  uint16
 	DnsPort    uint16
 	DeviceName string
 	Debug      bool
+	BypassLan  bool
 }
-
-type Event struct {
-	EventType uint8
-}
-
-const (
-	EventClose = 0
-)
 
 func MakeQuery(query Query) ([]byte, error) {
 	buf := &bytes.Buffer{}
 	writer, err := xz.NewWriter(buf)
-	strArr := []byte(query.DeviceName)
-	if len(strArr) > 128 {
-		strArr = strArr[:128]
-	}
-	err = binary.Write(writer, binary.LittleEndian, uint8(len(strArr)))
 	if err == nil {
-		_, err = writer.Write(strArr)
+		err = binary.Write(writer, binary.LittleEndian, query.Version)
 	}
 	if err == nil {
-		err = binary.Write(writer, binary.LittleEndian, query.ListenerPort)
+		strArr := []byte(query.DeviceName)
+		if len(strArr) > 128 {
+			strArr = strArr[:128]
+		}
+		err = binary.Write(writer, binary.LittleEndian, uint8(len(strArr)))
+		if err == nil {
+			_, err = writer.Write(strArr)
+		}
 	}
 	if err != nil {
 		return nil, errors.WithMessage(err, "write binary error")
@@ -61,20 +60,24 @@ func MakeQuery(query Query) ([]byte, error) {
 func ParseQuery(message []byte) (*Query, error) {
 	query := Query{}
 	reader, err := xz.NewReader(bytes.NewReader(message))
-	if err != nil {
-		return nil, errors.WithMessage(err, "read message error")
-	}
-	var strLen uint8
-	err = binary.Read(reader, binary.LittleEndian, &strLen)
 	if err == nil {
-		strBytes := make([]byte, strLen)
-		_, err := reader.Read(strBytes)
+		err = binary.Read(reader, binary.LittleEndian, &query.Version)
+	}
+	if query.Version < Version {
+		return nil, errors.New(fmt.Sprintf("remote version %d < current version %d, please upgrade your SagerConnect.", query.Version, Version))
+	} else if query.Version > Version {
+		return nil, errors.New(fmt.Sprintf("remote version %d > current version %d, please upgrade your SagerNet.", query.Version, Version))
+	}
+	if err == nil {
+		var strLen uint8
+		err = binary.Read(reader, binary.LittleEndian, &strLen)
 		if err == nil {
-			query.DeviceName = string(strBytes)
+			strBytes := make([]byte, strLen)
+			_, err := reader.Read(strBytes)
+			if err == nil {
+				query.DeviceName = string(strBytes)
+			}
 		}
-	}
-	if err == nil {
-		err = binary.Read(reader, binary.LittleEndian, &query.ListenerPort)
 	}
 	if err != nil {
 		return nil, errors.WithMessage(err, "parse binary error")
@@ -87,18 +90,26 @@ func MakeResponse(response Response) ([]byte, error) {
 	writer, err := xz.NewWriter(buf)
 	err = binary.Write(writer, binary.LittleEndian, response.SocksPort)
 	if err == nil {
+		err = binary.Write(writer, binary.LittleEndian, response.Version)
+	}
+	if err == nil {
 		err = binary.Write(writer, binary.LittleEndian, response.DnsPort)
 	}
-	strArr := []byte(response.DeviceName)
-	if len(strArr) > 128 {
-		strArr = strArr[:128]
-	}
-	err = binary.Write(writer, binary.LittleEndian, uint8(len(strArr)))
 	if err == nil {
-		_, err = writer.Write(strArr)
+		strArr := []byte(response.DeviceName)
+		if len(strArr) > 128 {
+			strArr = strArr[:128]
+		}
+		err = binary.Write(writer, binary.LittleEndian, uint8(len(strArr)))
+		if err == nil {
+			_, err = writer.Write(strArr)
+		}
 	}
 	if err == nil {
 		err = binary.Write(writer, binary.LittleEndian, response.Debug)
+	}
+	if err == nil {
+		err = binary.Write(writer, binary.LittleEndian, response.BypassLan)
 	}
 	if err != nil {
 		return nil, errors.WithMessage(err, "write binary error")
@@ -118,10 +129,17 @@ func MakeResponse(response Response) ([]byte, error) {
 func ParseResponse(message []byte) (*Response, error) {
 	response := Response{}
 	reader, err := xz.NewReader(bytes.NewReader(message))
-	if err != nil {
-		return nil, errors.WithMessage(err, "read message error")
+	if err == nil {
+		err = binary.Read(reader, binary.LittleEndian, &response.Version)
 	}
-	err = binary.Read(reader, binary.LittleEndian, &response.SocksPort)
+	if response.Version < Version {
+		return nil, errors.New(fmt.Sprintf("remote version %d < current version %d, please upgrade your SagerNet.", response.Version, Version))
+	} else if response.Version > Version {
+		return nil, errors.New(fmt.Sprintf("remote version %d > current version %d, please upgrade your SagerConnect.", response.Version, Version))
+	}
+	if err == nil {
+		err = binary.Read(reader, binary.LittleEndian, &response.SocksPort)
+	}
 	if err == nil {
 		err = binary.Read(reader, binary.LittleEndian, &response.DnsPort)
 	}
@@ -137,30 +155,9 @@ func ParseResponse(message []byte) (*Response, error) {
 	if err == nil {
 		err = binary.Read(reader, binary.LittleEndian, &response.Debug)
 	}
-	if err != nil {
-		return nil, errors.WithMessage(err, "parse binary error")
+	if err == nil {
+		err = binary.Read(reader, binary.LittleEndian, &response.BypassLan)
 	}
-	return &response, nil
-}
-
-func MakeEvent(event Event) ([]byte, error) {
-	writer := &bytes.Buffer{}
-	err := binary.Write(writer, binary.LittleEndian, event.EventType)
-	if err != nil {
-		return nil, errors.WithMessage(err, "write binary error")
-	}
-	message, err := ioutil.ReadAll(writer)
-	if err != nil {
-		return nil, errors.WithMessage(err, "read buf error")
-	}
-
-	return message, nil
-}
-
-func ParseEvent(message []byte) (*Event, error) {
-	response := Event{}
-	reader := bytes.NewReader(message)
-	err := binary.Read(reader, binary.LittleEndian, &response.EventType)
 	if err != nil {
 		return nil, errors.WithMessage(err, "parse binary error")
 	}

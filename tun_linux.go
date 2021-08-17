@@ -5,7 +5,7 @@ import (
 	"os/exec"
 )
 
-func addRoute(name string) (cmd string, err error) {
+func addRoute(name string, bypassLan bool) (cmd string, err error) {
 	_, ipRoute2NotFound := exec.LookPath("ip")
 	if ipRoute2NotFound == nil {
 		cmd, err = execShell("ip", "addr", "add", fmt.Sprintf("%s/30", PrivateVlan4Client), "dev", name)
@@ -22,7 +22,21 @@ func addRoute(name string) (cmd string, err error) {
 			return
 		}
 
-		cmd, err = execShell("ip", "route", "add", "default", "dev", name)
+		if bypassLan {
+			for _, addr := range BypassPrivateRoute {
+				cmd, err = execShell("ip", "route", "add", addr, "dev", name)
+				if err != nil {
+					return
+				}
+			}
+		} else {
+			cmd, err = execShell("ip", "route", "add", "0.0.0.0/0", "dev", name)
+			if err != nil {
+				return
+			}
+		}
+
+		cmd, err = execShell("ip", "route", "add", "::/0", "dev", name)
 		if err != nil {
 			return
 		}
@@ -41,9 +55,18 @@ func addRoute(name string) (cmd string, err error) {
 			return
 		}
 
-		cmd, err = execShell("route", "add", "-net", "0.0.0.0", "netmask", "0", name)
-		if err != nil {
-			return
+		if bypassLan {
+			for _, addr := range BypassPrivateRoute {
+				cmd, err = execShell("route", "add", "-net", addr, "netmask", "255", name)
+				if err != nil {
+					return
+				}
+			}
+		} else {
+			cmd, err = execShell("route", "add", "-net", "0.0.0.0/0", "netmask", "255", name)
+			if err != nil {
+				return
+			}
 		}
 
 		cmd, err = execShell("route", "add", "-A", "inet6", "::/0", name)
