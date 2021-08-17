@@ -9,7 +9,8 @@ import (
 )
 
 type Query struct {
-	DeviceName string
+	DeviceName   string
+	ListenerPort uint16
 }
 
 type Response struct {
@@ -18,6 +19,14 @@ type Response struct {
 	DeviceName string
 	Debug      bool
 }
+
+type Event struct {
+	EventType uint8
+}
+
+const (
+	EventClose = 0
+)
 
 func MakeQuery(query Query) ([]byte, error) {
 	buf := &bytes.Buffer{}
@@ -29,6 +38,9 @@ func MakeQuery(query Query) ([]byte, error) {
 	err = binary.Write(writer, binary.LittleEndian, uint8(len(strArr)))
 	if err == nil {
 		_, err = writer.Write(strArr)
+	}
+	if err == nil {
+		err = binary.Write(writer, binary.LittleEndian, query.ListenerPort)
 	}
 	if err != nil {
 		return nil, errors.WithMessage(err, "write binary error")
@@ -60,6 +72,9 @@ func ParseQuery(message []byte) (*Query, error) {
 		if err == nil {
 			query.DeviceName = string(strBytes)
 		}
+	}
+	if err == nil {
+		err = binary.Read(reader, binary.LittleEndian, &query.ListenerPort)
 	}
 	if err != nil {
 		return nil, errors.WithMessage(err, "parse binary error")
@@ -122,6 +137,30 @@ func ParseResponse(message []byte) (*Response, error) {
 	if err == nil {
 		err = binary.Read(reader, binary.LittleEndian, &response.Debug)
 	}
+	if err != nil {
+		return nil, errors.WithMessage(err, "parse binary error")
+	}
+	return &response, nil
+}
+
+func MakeEvent(event Event) ([]byte, error) {
+	writer := &bytes.Buffer{}
+	err := binary.Write(writer, binary.LittleEndian, event.EventType)
+	if err != nil {
+		return nil, errors.WithMessage(err, "write binary error")
+	}
+	message, err := ioutil.ReadAll(writer)
+	if err != nil {
+		return nil, errors.WithMessage(err, "read buf error")
+	}
+
+	return message, nil
+}
+
+func ParseEvent(message []byte) (*Event, error) {
+	response := Event{}
+	reader := bytes.NewReader(message)
+	err := binary.Read(reader, binary.LittleEndian, &response.EventType)
 	if err != nil {
 		return nil, errors.WithMessage(err, "parse binary error")
 	}

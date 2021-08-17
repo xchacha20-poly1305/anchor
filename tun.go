@@ -17,6 +17,11 @@ import (
 	"time"
 )
 
+const (
+	PrivateVlan4Client = "172.19.0.1"
+	PrivateVlan6Client = "fdfe:dcba:9876::1"
+)
+
 type Tun2socks struct {
 	access  sync.Mutex
 	stack   *stack.Stack
@@ -35,7 +40,7 @@ func (*proxyTunnel) AddPacket(packet core.UDPPacket) {
 	tunnel.AddPacket(packet)
 }
 
-func NewTun2socks(name string, addr net.Addr, socksPort int, dnsPort int, debug bool) (*Tun2socks, error) {
+func NewTun2socks(name string, addr string, socksPort int, dnsPort int, debug bool) (*Tun2socks, error) {
 
 	tun, err := openDevice(name)
 	if err != nil {
@@ -47,15 +52,15 @@ func NewTun2socks(name string, addr net.Addr, socksPort int, dnsPort int, debug 
 	if debug {
 		log.SetLevel(log.DebugLevel)
 	} else {
-		log.SetLevel(log.WarnLevel)
+		log.SetLevel(log.InfoLevel)
 	}
 
-	socks5Proxy, err := proxy.NewSocks5(fmt.Sprintf("127.0.0.1:%d", socksPort), "", "")
+	socks5Proxy, err := proxy.NewSocks5(fmt.Sprintf("%s:%d", addr, socksPort), "", "")
 	if err != nil {
 		return nil, err
 	}
 
-	dnsAddrStr := fmt.Sprintf("127.0.0.1:%d", dnsPort)
+	dnsAddrStr := fmt.Sprintf("%s:%d", addr, dnsPort)
 	dnsAddr, err := net.ResolveUDPAddr("udp", dnsAddrStr)
 	if err != nil {
 		return nil, err
@@ -128,6 +133,7 @@ func (pc *dnsPacketConn) WriteTo(b []byte, addr net.Addr) (int, error) {
 			return pc.conn.WriteTo(b, pc.dnsAddr)
 		} else {
 			pc.notDns = true
+			log.Debugf("not dns query conn to %s", addr.String())
 		}
 	}
 	return pc.conn.WriteTo(b, addr)
