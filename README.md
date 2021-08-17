@@ -10,3 +10,12 @@ Enable "Allow Connections from LAN" in settings
 ./build.sh
 sudo ./sagerconnect [tun0]
 ```
+
+### OS Support Status:
+
+- Debian sid: **Tested and Working**
+- Other Linux: **Untested**
+- Windows: **Untested**
+- macOS: **Untested**
+- FreeBSD: **Untested**
+- OpenBSD: **Untested**
