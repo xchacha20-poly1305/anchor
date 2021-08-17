@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/sagernet/sagerconnect/api"
 	"github.com/xjasonlyu/tun2socks/log"
 	"net"
@@ -14,6 +15,11 @@ import (
 
 func main() {
 	log.SetLevel(log.InfoLevel)
+
+	err := ExecSu()
+	if err != nil {
+		log.Fatalf("permission denied: %v", err)
+	}
 
 	conn, err := net.ListenUDP("udp", nil)
 	must(err)
@@ -87,6 +93,25 @@ func execShell(name string, arg ...string) (cmd string, err error) {
 	if err == nil {
 		err = shell.Wait()
 	}
+	return
+}
+
+func execProc(name string, arg []string) {
+	shell := exec.Command(name, arg...)
+	shell.Stdin = os.Stdin
+	shell.Stdout = os.Stdout
+	shell.Stderr = os.Stderr
+	err := shell.Start()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	status, err := shell.Process.Wait()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	os.Exit(status.ExitCode())
 	return
 }
 

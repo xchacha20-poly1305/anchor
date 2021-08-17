@@ -88,9 +88,11 @@ func ParseQuery(message []byte) (*Query, error) {
 func MakeResponse(response Response) ([]byte, error) {
 	buf := &bytes.Buffer{}
 	writer, err := xz.NewWriter(buf)
-	err = binary.Write(writer, binary.LittleEndian, response.SocksPort)
 	if err == nil {
 		err = binary.Write(writer, binary.LittleEndian, response.Version)
+	}
+	if err == nil {
+		err = binary.Write(writer, binary.LittleEndian, response.SocksPort)
 	}
 	if err == nil {
 		err = binary.Write(writer, binary.LittleEndian, response.DnsPort)
