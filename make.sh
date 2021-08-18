@@ -12,4 +12,4 @@ if [ $(command -v go) ]; then
   export PATH="$PATH:$(go env GOPATH)/bin"
 fi
 
-go build -o sagerconnect -trimpath -ldflags "-s -w -buildid=" .
+make $@

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/ulikunitz/xz"
 	"io/ioutil"
@@ -21,6 +22,7 @@ type Response struct {
 	SocksPort  uint16
 	DnsPort    uint16
 	DeviceName string
+	UUID       uuid.UUID
 	Debug      bool
 	BypassLan  bool
 }
@@ -107,6 +109,12 @@ func MakeResponse(response Response) ([]byte, error) {
 			_, err = writer.Write(strArr)
 		}
 	}
+	if err != nil {
+		uuidMessage, err := response.UUID.MarshalBinary()
+		if err != nil {
+			_, err = writer.Write(uuidMessage)
+		}
+	}
 	if err == nil {
 		err = binary.Write(writer, binary.LittleEndian, response.Debug)
 	}
@@ -152,6 +160,13 @@ func ParseResponse(message []byte) (*Response, error) {
 		_, err := reader.Read(strBytes)
 		if err == nil {
 			response.DeviceName = string(strBytes)
+		}
+	}
+	if err == nil {
+		uuidMessage := make([]byte, 16)
+		_, err = reader.Read(uuidMessage)
+		if err == nil {
+			response.UUID, err = uuid.ParseBytes(uuidMessage)
 		}
 	}
 	if err == nil {

@@ -1,4 +1,4 @@
-package main
+package tun
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/core/device"
+	"github.com/xjasonlyu/tun2socks/core/device/tun"
 	"github.com/xjasonlyu/tun2socks/core/stack"
 	"github.com/xjasonlyu/tun2socks/log"
 	"github.com/xjasonlyu/tun2socks/proxy"
@@ -205,12 +206,12 @@ func (*proxyTunnel) AddPacket(packet core.UDPPacket) {
 
 func NewTun2socks(name string, addr string, socksPort int, dnsPort int, debug bool) (*Tun2socks, error) {
 
-	tun, err := openDevice(name)
+	device, err := tun.Open(tun.WithName(name), tun.WithMTU(1500))
 	if err != nil {
 		return nil, err
 	}
 
-	gvisor, err := stack.New(tun, &proxyTunnel{}, stack.WithDefault())
+	gvisor, err := stack.New(device, &proxyTunnel{}, stack.WithDefault())
 
 	if debug {
 		log.SetLevel(log.DebugLevel)
@@ -232,7 +233,7 @@ func NewTun2socks(name string, addr string, socksPort int, dnsPort int, debug bo
 
 	return &Tun2socks{
 		stack:   gvisor,
-		device:  &tun,
+		device:  &device,
 		proxy:   socks5Proxy,
 		dns:     dnsAddrStr,
 		dnsAddr: dnsAddr,

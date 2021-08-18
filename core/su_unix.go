@@ -1,6 +1,6 @@
 // +build !windows
 
-package main
+package core
 
 import (
 	"golang.org/x/sys/unix"
@@ -15,14 +15,12 @@ func ExecSu() error {
 
 	_, sudoNotExists := exec.LookPath("sudo")
 	if sudoNotExists == nil {
-		execProc("sudo", os.Args)
+		return ExecProc("sudo", os.Args)
 	} else {
 		args := []string{"-c"}
 		for _, arg := range os.Args {
 			args = append(args, arg)
 		}
-		execProc("su", args)
+		return ExecProc("su", args)
 	}
-
-	return nil
 }
