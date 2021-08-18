@@ -17,19 +17,14 @@ import (
 const Version = "0.1.0"
 
 func main() {
-	flags := flag.NewFlagSet("SagerConnect", flag.ContinueOnError)
+	flags := flag.NewFlagSet("SagerConnect", flag.PanicOnError)
 
 	showHelp := flags.Bool("help", false, "show help and exit")
 	showVersion := flags.Bool("version", false, "show version and exit")
 
 	//headless := flags.Bool("h", false, "don't show gui")
 
-	err := flags.Parse(os.Args)
-	if err != nil {
-		println(err)
-		flags.Usage()
-		os.Exit(1)
-	}
+	_ = flags.Parse(os.Args)
 
 	if *showHelp {
 		flags.Usage()
@@ -87,7 +82,7 @@ func simple() {
 
 	log.Infof("found %s (%s)", response.DeviceName, addr.IP.String())
 
-	tunName := "tun0"
+	tunName := tun.DefaultTunName
 	if len(os.Args) > 1 {
 		tunName = os.Args[1]
 	}

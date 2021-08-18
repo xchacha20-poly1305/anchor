@@ -323,7 +323,6 @@ github.com/google/subcommands v1.0.2-0.20190508160503-636abe8753b8/go.mod h1:Zjh
 github.com/google/uuid v1.0.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.1.2/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/google/uuid v1.2.0 h1:qJYtXnJRWmpe7m/3XlyhrsLrEURqHRM2kxzoxXqyUDs=
 github.com/google/uuid v1.2.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+vpHVxEJEs9eg=
 github.com/googleapis/gax-go/v2 v2.0.5/go.mod h1:DWXyrwAJ9X0FpwwEdw+IPEYBICEFu5mhpdKc/us6bOk=
@@ -491,10 +490,10 @@ github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6L
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/russross/blackfriday/v2 v2.0.1/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/safchain/ethtool v0.0.0-20190326074333-42ed695e3de8/go.mod h1:Z0q5wiBQGYcxhMZ6gUqHn6pYNLypFAvaL3UvgZLR0U4=
-github.com/sagernet/tun2socks v1.18.4-0.20210818073943-7767582a6821 h1:5SMh9zw5eNW8R3LVZCCJ8BzHrobSsWXkn+X7liOXbas=
-github.com/sagernet/tun2socks v1.18.4-0.20210818073943-7767582a6821/go.mod h1:0LpmTTAIYgZmVoHJ9+3L3JlQPOgGnlviHRYNEbt9+aA=
-github.com/sagernet/wireguard-tun v0.0.0-20210818073844-d2018b646756 h1:Yuv4lZmptWj18nOVgQ6MD2Wo2n9h5P1C4ehCcXNaHaM=
-github.com/sagernet/wireguard-tun v0.0.0-20210818073844-d2018b646756/go.mod h1:5B0L7j7rUsqTSUBcTjJK9E0k/6a9rkzZRTMHFhws73Y=
+github.com/sagernet/tun2socks v1.18.4-0.20210818104726-9b52b624f351 h1:OeMQFd8ZarGauzrm3rM5x/OIv2uSxtzu1w7ow3rI3H4=
+github.com/sagernet/tun2socks v1.18.4-0.20210818104726-9b52b624f351/go.mod h1:lAusdcZGzQEc/g7H1/pyfoAAtj/JIMbNufh4dWMP/Hk=
+github.com/sagernet/wireguard-tun v0.0.0-20210818104535-089b1f142051 h1:uJvVF5tnsLlS98LEQnKHqKU1+v6p+dV8/vmr4zfWM24=
+github.com/sagernet/wireguard-tun v0.0.0-20210818104535-089b1f142051/go.mod h1:5B0L7j7rUsqTSUBcTjJK9E0k/6a9rkzZRTMHFhws73Y=
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
 github.com/seccomp/libseccomp-golang v0.9.1/go.mod h1:GbW5+tmTXfcxTToHLXlScSlAvWlF4P2Ca7zGrPiEpWo=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=

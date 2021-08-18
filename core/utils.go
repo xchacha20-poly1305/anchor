@@ -2,7 +2,7 @@ package core
 
 import (
 	"fmt"
-	"log"
+	"github.com/xjasonlyu/tun2socks/log"
 	"os"
 	"os/exec"
 	"strings"
@@ -10,18 +10,18 @@ import (
 
 func Must(err error) {
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("fatal: %v", err)
 	}
 }
 
 func Must0(_ interface{}, err error) {
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("fatal: %v", err)
 	}
 }
 func Must1(_ interface{}, _ interface{}, err error) {
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("fatal: %v", err)
 	}
 }
 
@@ -31,6 +31,9 @@ func ExecShell(cmdIn string, errIn error, name string, arg ...string) (cmd strin
 	}
 	cmd = strings.Join([]string{name, strings.Join(arg, " ")}, " ")
 	shell := exec.Command(name, arg...)
+	log.Debugf(">> %s", cmd)
+	shell.Stdin = os.Stdin
+	shell.Stdout = os.Stdout
 	shell.Stderr = os.Stderr
 	err = shell.Start()
 	if err == nil {

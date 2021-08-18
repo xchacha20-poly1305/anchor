@@ -11,4 +11,4 @@ require (
 	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e
 )
 
-replace github.com/xjasonlyu/tun2socks v1.18.4-0.20210813034434-85cf694b8fed => github.com/sagernet/tun2socks v1.18.4-0.20210818073943-7767582a6821
+replace github.com/xjasonlyu/tun2socks v1.18.4-0.20210813034434-85cf694b8fed => github.com/sagernet/tun2socks v1.18.4-0.20210818104726-9b52b624f351
