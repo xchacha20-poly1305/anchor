@@ -257,7 +257,7 @@ func (t *Tun2socks) Close() {
 
 func (t *Tun2socks) DialContext(ctx context.Context, metadata *constant.Metadata) (net.Conn, error) {
 	if metadata.DstPort == 53 {
-		return dialer.DialContext(ctx, "tcp", t.dns)
+		return dialer.DialContext(ctx, metadata.Network(), t.dns)
 	}
 	return t.proxy.DialContext(ctx, metadata)
 }

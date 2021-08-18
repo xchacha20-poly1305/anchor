@@ -26,13 +26,11 @@ func Must1(_ interface{}, _ interface{}, err error) {
 }
 
 func ExecShell(cmdIn string, errIn error, name string, arg ...string) (cmd string, err error) {
-	if err != nil {
-		return cmdIn, err
+	if errIn != nil {
+		return cmdIn, errIn
 	}
 	cmd = strings.Join([]string{name, strings.Join(arg, " ")}, " ")
 	shell := exec.Command(name, arg...)
-	shell.Stdin = os.Stdin
-	shell.Stdout = os.Stdout
 	shell.Stderr = os.Stderr
 	err = shell.Start()
 	if err == nil {

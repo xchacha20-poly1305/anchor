@@ -3,8 +3,7 @@ module github.com/sagernet/sagerconnect
 go 1.16
 
 require (
-	fyne.io/fyne/v2 v2.0.4
-	github.com/google/uuid v1.2.0
+	//github.com/google/uuid v1.2.0
 	github.com/miekg/dns v1.1.43
 	github.com/pkg/errors v0.9.1
 	github.com/ulikunitz/xz v0.5.10

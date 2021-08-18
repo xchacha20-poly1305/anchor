@@ -14,7 +14,7 @@ func AddRoute(name string, bypassLan bool) (cmd string, err error) {
 		cmd, err = core.ExecShell(cmd, err, "ip", "link", "set", "dev", name, "up")
 		if bypassLan {
 			for _, addr := range BypassPrivateRoute {
-				cmd, err = core.ExecShell(cmd, err, "add", addr, "dev", name)
+				cmd, err = core.ExecShell(cmd, err, "ip", "route", "add", addr, "dev", name)
 			}
 		} else {
 			cmd, err = core.ExecShell(cmd, err, "ip", "route", "add", "0.0.0.0/0", "dev", name)
@@ -22,7 +22,7 @@ func AddRoute(name string, bypassLan bool) (cmd string, err error) {
 		cmd, err = core.ExecShell(cmd, err, "ip", "route", "add", "::/0", "dev", name)
 		cmd, err = core.ExecShell(cmd, err, "ip", "route", "flush", "cache")
 	} else {
-		cmd, err = core.ExecShell(cmd, err, "ifconfig", name, PrivateVlan4Client, "netmask", "30")
+		cmd, err = core.ExecShell(cmd, err, "ifconfig", name, PrivateVlan4Client, "netmask", "255.255.255.252")
 		cmd, err = core.ExecShell(cmd, err, "ifconfig", name, "add", fmt.Sprintf("%s/126", PrivateVlan6Client))
 		if bypassLan {
 			for _, addr := range BypassPrivateRoute {

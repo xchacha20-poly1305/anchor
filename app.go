@@ -1,6 +1,6 @@
 package main
 
-import (
+/*import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"github.com/sagernet/sagerconnect/res"
@@ -25,3 +25,4 @@ func applicationInit() {
 
 func (w *MainApplication) initWindow() {
 }
+*/
