@@ -2,11 +2,6 @@ package main
 
 import (
 	"flag"
-	"github.com/chzyer/readline"
-	"github.com/sagernet/sagerconnect/api"
-	"github.com/sagernet/sagerconnect/core"
-	"github.com/sagernet/sagerconnect/tun"
-	"github.com/xjasonlyu/tun2socks/log"
 	"net"
 	"os"
 	"os/signal"
@@ -14,6 +9,12 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/chzyer/readline"
+	"github.com/sagernet/sagerconnect/api"
+	"github.com/sagernet/sagerconnect/core"
+	"github.com/sagernet/sagerconnect/tun"
+	"github.com/xjasonlyu/tun2socks/log"
 )
 
 //go:generate goversioninfo --platform-specific
@@ -23,6 +24,11 @@ type scanResult struct {
 	addr     *net.UDPAddr
 	nif      *net.Interface
 	response *api.Response
+}
+
+type ifAddr struct {
+	nif  *net.Interface
+	inet *net.IPNet
 }
 
 func main() {
@@ -54,21 +60,21 @@ func main() {
 
 		//core.Must0(api.ParseQuery(query))
 
-		ifs, err := net.Interfaces()
-		core.Must("lookup network interfaces", err)
+		ifAddrs, err := listIfAddr()
+		if len(ifAddrs) == 0 {
+			core.Must("get available network interface", err)
+		}
 
 		rc := make(chan scanResult)
-		rErr := scanResult{false, nil, nil, nil}
-
-		for _, nif := range ifs {
-			nif := nif
+		for _, ifAddr := range ifAddrs {
+			ifAddr := ifAddr
 			go func() {
-				mcr, _ := nif.MulticastAddrs()
+				rErr := scanResult{false, nil, nil, nil}
 				conn, err := net.ListenUDP("udp4", &net.UDPAddr{
-					IP: net.ParseIP(mcr[0].String()),
+					IP: ifAddr.inet.IP,
 				})
 
-				core.Maybef("create multicast conn on if %s", err, nif.Name)
+				core.Maybef("create multicast conn on if %s", err, ifAddr.nif.Name)
 				if err != nil {
 					rc <- rErr
 					return
@@ -78,12 +84,12 @@ func main() {
 					Port: 11451,
 				})
 
-				core.Maybef("send scan query on %s", err, nif.Name)
+				core.Maybef("send scan query on %s", err, ifAddr.nif.Name)
 				if err != nil {
 					rc <- rErr
 					return
 				}
-				_ = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+				_ = conn.SetReadDeadline(time.Now().Add(1 * time.Second))
 				buffer := make([]byte, 2048)
 				length, addr, err := conn.ReadFromUDP(buffer)
 
@@ -110,14 +116,14 @@ func main() {
 				rc <- scanResult{
 					ok:       true,
 					addr:     addr,
-					nif:      &nif,
+					nif:      ifAddr.nif,
 					response: response,
 				}
 			}()
 		}
 
 		deviceMap := make(map[string]scanResult)
-		for _ = range ifs {
+		for range ifAddrs {
 			result := <-rc
 			if !result.ok {
 				continue
@@ -226,4 +232,30 @@ func main() {
 	log.SetLevel(log.InfoLevel)
 	tun2socks.Close()
 	log.Infof("Closed")
+}
+
+func listIfAddr() (ifAddrs []ifAddr, err error) {
+	ifs, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, nif := range ifs {
+		addrs, err := nif.Addrs()
+		if err != nil {
+			return nil, err
+		}
+
+		for _, addr := range addrs {
+			if addr, isIPNet := addr.(*net.IPNet); isIPNet && addr.IP.To4() != nil && !addr.IP.IsLoopback() && !addr.IP.IsLinkLocalUnicast() {
+				ifAddrs = append(ifAddrs, ifAddr{
+					nif:  &nif,
+					inet: addr,
+				})
+				break
+			}
+		}
+	}
+
+	return
 }
