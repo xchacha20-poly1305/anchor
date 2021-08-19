@@ -6,15 +6,15 @@ Connect to SagerNet in the LAN (no configuration required)
 
 1. Upgrade SagerNet to 0.4-rc02 or later
 2. Enable "Allow Connections from LAN" in settings
-3. Run `sc`
+3. Run `sc` in terminal
 
 ### OS Support Status:
 
 - Debian sid: **Tested and Working**
 - Other Linux: **Untested**
-- Windows: **Untested**
-- macOS: **Untested**
+- Windows: *Tested and Working**
+- macOS: *Tested and Working**
 - FreeBSD: **Untested**
 - OpenBSD: **Untested**
 
-For MacOS users, please turn off your firewall to allow your device to communicate with devices on the LAN.
+For macOS users: please turn off firewall to allow communicating with devices in the LAN.

@@ -15,6 +15,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/proxy"
 	"github.com/xjasonlyu/tun2socks/tunnel"
 	"net"
+	"strings"
 	"sync"
 	"time"
 )
@@ -193,6 +194,7 @@ type Tun2socks struct {
 	device  *device.Device
 	dns     string
 	dnsAddr *net.UDPAddr
+	debug   bool
 }
 
 type proxyTunnel struct{}
@@ -204,9 +206,9 @@ func (*proxyTunnel) AddPacket(packet core.UDPPacket) {
 	tunnel.AddPacket(packet)
 }
 
-func NewTun2socks(name string, addr string, socksPort int, dnsPort int, debug bool) (*Tun2socks, error) {
+func NewTun2socks(name string, addr string, socksPort int, dnsPort int, mtu int, debug bool) (*Tun2socks, error) {
 
-	device, err := tun.Open(tun.WithName(name), tun.WithMTU(1500))
+	device, err := tun.Open(tun.WithName(name), tun.WithMTU(uint32(mtu)))
 	if err != nil {
 		return nil, err
 	}
@@ -215,8 +217,6 @@ func NewTun2socks(name string, addr string, socksPort int, dnsPort int, debug bo
 
 	if debug {
 		log.SetLevel(log.DebugLevel)
-	} else {
-		log.SetLevel(log.WarnLevel)
 	}
 
 	socks5Proxy, err := proxy.NewSocks5(fmt.Sprintf("%s:%d", addr, socksPort), "", "")
@@ -277,8 +277,69 @@ func (t *Tun2socks) newDnsPacketConn(metadata *constant.Metadata) (conn net.Pack
 	}
 	conn = &dnsPacketConn{conn: conn, dnsAddr: t.dnsAddr, realAddr: metadata.UDPAddr(), proxyConstructor: func() (net.PacketConn, error) {
 		return t.proxy.DialUDP(metadata)
-	}}
+	}, debug: t.debug}
 	return
+}
+
+func fmtDnsMessage(msg *dns.Msg) string {
+	message := ""
+	for i, question := range msg.Question {
+		if i > 0 {
+			message = fmt.Sprint(message, ", ")
+		}
+		message = fmt.Sprint(message, question.Name)
+		var qType string
+		switch question.Qtype {
+		case dns.TypeA:
+			qType = "A"
+			break
+		case dns.TypeAAAA:
+			qType = "AAAA"
+			break
+		case dns.TypeTXT:
+			qType = "TXT"
+			break
+		case dns.TypePTR:
+			qType = "PTR"
+			break
+		default:
+			qType = fmt.Sprint(question.Qtype)
+		}
+		message = fmt.Sprint(message, " ", qType)
+	}
+	if msg.Response {
+		message = fmt.Sprint(message, ": ")
+		if len(msg.Answer) == 0 {
+			message = fmt.Sprint(message, "empty response")
+		} else {
+			for i, rr := range msg.Answer {
+				if i > 0 {
+					message = fmt.Sprint(message, ", ")
+				}
+				var rContent string
+				switch rr.Header().Rrtype {
+				case dns.TypeA:
+					rContent = rr.(interface{}).(*dns.A).A.String()
+					break
+				case dns.TypeAAAA:
+					rContent = rr.(interface{}).(*dns.AAAA).AAAA.String()
+					break
+				case dns.TypeTXT:
+					rContent = strings.Join(rr.(interface{}).(*dns.TXT).Txt, " ")
+					break
+				case dns.TypePTR:
+					rContent = rr.(interface{}).(*dns.PTR).Ptr
+					break
+				default:
+					continue
+				}
+				if rContent != "" {
+					message = fmt.Sprint(message, " ", rContent)
+				}
+			}
+		}
+	}
+	return message
 }
 
 type dnsPacketConn struct {
@@ -286,19 +347,24 @@ type dnsPacketConn struct {
 	proxyConn        net.PacketConn
 	proxyConstructor func() (net.PacketConn, error)
 	notDns           bool
+	isDns            bool
 	dnsAddr          *net.UDPAddr
 	realAddr         net.Addr
+	debug            bool
 }
 
 func (pc *dnsPacketConn) WriteTo(b []byte, addr net.Addr) (int, error) {
 	pc.realAddr = addr
 	if !pc.notDns {
-		req := new(dns.Msg)
-		err := req.Unpack(b)
-		if err == nil && !req.Response {
-			if len(req.Question) > 0 {
-				log.Debugf("new dns query: %s", req.Question[0].Name)
+		if !pc.isDns || pc.debug {
+			msg := new(dns.Msg)
+			err := msg.Unpack(b)
+			if err == nil && !msg.Response {
+				pc.isDns = true
+				defer log.Debugf("[DNS] query: %s", fmtDnsMessage(msg))
 			}
+		}
+		if pc.isDns {
 			return pc.conn.WriteTo(b, pc.dnsAddr)
 		} else {
 			pc.notDns = true
@@ -307,7 +373,6 @@ func (pc *dnsPacketConn) WriteTo(b []byte, addr net.Addr) (int, error) {
 				return 0, err
 			}
 			pc.proxyConn = conn
-			log.Debugf("not dns query conn to %s", addr.String())
 		}
 	}
 	return pc.proxyConn.WriteTo(b, addr)
@@ -321,6 +386,13 @@ func (pc *dnsPacketConn) ReadFrom(p []byte) (n int, addr net.Addr, err error) {
 		n, addr, err = pc.proxyConn.ReadFrom(p)
 	} else {
 		n, addr, err = pc.conn.ReadFrom(p)
+		if err == nil && pc.debug {
+			msg := new(dns.Msg)
+			err := msg.Unpack(p[:n])
+			if err == nil && msg.Response {
+				defer log.Debugf("[DNS] response: %s", fmtDnsMessage(msg))
+			}
+		}
 	}
 	if pc.realAddr != nil {
 		addr = pc.realAddr

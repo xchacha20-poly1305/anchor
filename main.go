@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/chzyer/readline"
 	"github.com/sagernet/sagerconnect/api"
 	"github.com/sagernet/sagerconnect/core"
 	"github.com/sagernet/sagerconnect/tun"
@@ -9,99 +10,214 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
 )
 
-const Version = "0.1.0"
+//go:generate goversioninfo --platform-specific
 
-func main() {
-	flags := flag.NewFlagSet("SagerConnect", flag.PanicOnError)
-
-	showHelp := flags.Bool("help", false, "show help and exit")
-	showVersion := flags.Bool("version", false, "show version and exit")
-
-	//headless := flags.Bool("h", false, "don't show gui")
-
-	_ = flags.Parse(os.Args)
-
-	if *showHelp {
-		flags.Usage()
-		return
-	}
-
-	if *showVersion {
-		println(Version)
-		return
-	}
-
-	simple()
-
-	/*if *headless {
-		return
-	}*/
-
-	/*applicationInit()
-
-	mainApp.Run()*/
+type scanResult struct {
+	ok       bool
+	addr     *net.UDPAddr
+	nif      *net.Interface
+	response *api.Response
 }
 
-func simple() {
+func main() {
 	log.SetLevel(log.InfoLevel)
-	core.Must(core.ExecSu())
 
-	conn, err := net.ListenUDP("udp", nil)
-	core.Must(err)
+	fs := flag.NewFlagSet("SagerNet", flag.ExitOnError)
+	verbose := fs.Bool("v", false, "enable debug log (override)")
+	bypass := fs.Bool("b", false, "bypass LAN route (override)")
+	selectedIndex := fs.Int("d", -1, "selected device index (skip select)")
+	remoteIp := fs.String("a", "", "remote ip address (skip scan)")
+	socksPort := fs.Int("socks", 2080, "remote socks port (skip scan)")
+	dnsPort := fs.Int("dns", 6450, "remote dns port (skip scan)")
+	tunName := fs.String("t", tun.DefaultTunName, "tun interface name")
+	mtu := fs.Int("m", 1500, "mtu")
+	_ = fs.Parse(os.Args[1:])
 
-	deviceName, err := os.Hostname()
-	core.Must(err)
+	core.Must("su", core.ExecSu())
 
-	query, err := api.MakeQuery(api.Query{Version: api.Version, DeviceName: deviceName})
-	core.Must(err)
+	var devices []scanResult
 
-	//core.Must0(api.ParseQuery(query))
+	if *remoteIp == "" {
+		// scan devices
 
-	_, err = conn.WriteTo(query, &net.UDPAddr{
-		IP:   net.IPv4bcast,
-		Port: 11451,
-	})
-	core.Must(err)
+		deviceName, err := os.Hostname()
+		core.Must("get hostname", err)
 
-	buffer := make([]byte, 2048)
-	core.Must(conn.SetReadDeadline(time.Now().Add(5 * time.Second)))
-	length, addr, err := conn.ReadFromUDP(buffer)
-	if err != nil && strings.Contains(err.Error(), "timeout") {
-		log.Fatalf("no device found")
+		query, err := api.MakeQuery(&api.Query{Version: api.Version, DeviceName: deviceName})
+		core.Must("make scan query", err)
+
+		//core.Must0(api.ParseQuery(query))
+
+		ifs, err := net.Interfaces()
+		core.Must("lookup network interfaces", err)
+
+		rc := make(chan scanResult)
+		rErr := scanResult{false, nil, nil, nil}
+
+		for _, nif := range ifs {
+			nif := nif
+			go func() {
+				mcr, _ := nif.MulticastAddrs()
+				conn, err := net.ListenUDP("udp4", &net.UDPAddr{
+					IP: net.ParseIP(mcr[0].String()),
+				})
+
+				core.Maybef("create multicast conn on if %s", err, nif.Name)
+				if err != nil {
+					rc <- rErr
+					return
+				}
+				_, err = conn.WriteTo(query, &net.UDPAddr{
+					IP:   net.IPv4bcast,
+					Port: 11451,
+				})
+
+				core.Maybef("send scan query on %s", err, nif.Name)
+				if err != nil {
+					rc <- rErr
+					return
+				}
+				_ = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+				buffer := make([]byte, 2048)
+				length, addr, err := conn.ReadFromUDP(buffer)
+
+				if err != nil && strings.Contains(err.Error(), "timeout") {
+					rc <- rErr
+					return
+				}
+
+				core.Maybe("read scan result", err)
+				if err != nil {
+					rc <- rErr
+					return
+				}
+
+				core.Maybe("close scan conn", conn.Close())
+
+				response, err := api.ParseResponse(buffer[:length])
+				core.Maybe("parse response", err)
+				if err != nil {
+					rc <- rErr
+					return
+				}
+
+				rc <- scanResult{
+					ok:       true,
+					addr:     addr,
+					nif:      &nif,
+					response: response,
+				}
+			}()
+		}
+
+		deviceMap := make(map[string]scanResult)
+		for _ = range ifs {
+			result := <-rc
+			if !result.ok {
+				continue
+			}
+			deviceMap[result.addr.IP.String()] = result
+		}
+		close(rc)
+
+		for _, device := range deviceMap {
+			devices = append(devices, device)
+			log.Infof("Found %d. %s (%s)", len(devices), device.response.DeviceName, device.addr.IP.String())
+		}
+	} else {
+		ip := net.ParseIP(*remoteIp)
+		if ip == nil {
+			log.Fatalf("Failed to parse remote address: %s", *remoteIp)
+		}
+
+		devices = append(devices, scanResult{
+			ok: true,
+			addr: &net.UDPAddr{
+				IP:   ip,
+				Port: -1,
+			},
+			response: &api.Response{
+				Version:   api.Version,
+				SocksPort: uint16(*socksPort),
+				DnsPort:   uint16(*dnsPort),
+			},
+		})
 	}
-	core.Must(err)
-	core.Must(conn.Close())
 
-	response, err := api.ParseResponse(buffer[:length])
-	core.Must(err)
-
-	log.Infof("found %s (%s)", response.DeviceName, addr.IP.String())
-
-	tunName := tun.DefaultTunName
-	if len(os.Args) > 1 {
-		tunName = os.Args[1]
+	deviceSize := len(devices)
+	var selected *scanResult
+	if deviceSize == 0 {
+		log.Fatalf("no devices found")
+	} else if deviceSize > 1 {
+		if *selectedIndex != -1 {
+			if deviceSize < *selectedIndex {
+				log.Fatalf("Invalid device selected: %d", *selectedIndex)
+			}
+			selected = &devices[*selectedIndex-1]
+		} else {
+			for {
+				line, err := readline.Line("> Select device to connect: ")
+				if err != nil {
+					log.Fatalf("failed to read selection: %v", err)
+				}
+				index, err := strconv.ParseUint(line, 10, 8)
+				if err != nil || deviceSize < int(index) {
+					log.Errorf("Invalid device selected: %s", line)
+					continue
+				}
+				selected = &devices[index-1]
+				break
+			}
+		}
+	} else {
+		selected = &devices[0]
 	}
 
-	log.Infof("socks port: %d", response.SocksPort)
-	log.Infof("dns port: %d", response.DnsPort)
-	log.Infof("enable log: %v", response.Debug)
+	if *remoteIp == "" {
+		log.Infof("Selected %s (%s)", selected.response.DeviceName, selected.addr.IP.String())
+	}
 
-	tun2socks, err := tun.NewTun2socks(tunName, addr.IP.String(), int(response.SocksPort), int(response.DnsPort), response.Debug)
-	core.Must(err)
+	if *socksPort != 2080 {
+		selected.response.SocksPort = uint16(*socksPort)
+	}
+
+	if *socksPort != 6450 {
+		selected.response.DnsPort = uint16(*dnsPort)
+	}
+
+	if *verbose {
+		selected.response.Debug = true
+	}
+
+	if *bypass {
+		selected.response.BypassLan = true
+	}
+
+	log.Infof("SOCKS port: %d", selected.response.SocksPort)
+	log.Infof("DNS port: %d", selected.response.DnsPort)
+	log.Infof("Enable log: %v", selected.response.Debug)
+
+	if *mtu != 1500 {
+		log.Infof("MTU: %d", *mtu)
+	}
+
+	tun2socks, err := tun.NewTun2socks(*tunName, selected.addr.IP.String(), int(selected.response.SocksPort), int(selected.response.DnsPort), *mtu, selected.response.Debug)
+	core.Must("create tun", err)
 	tun2socks.Start()
 
-	cmd, err := tun.AddRoute(tunName, response.BypassLan)
+	cmd, err := tun.AddRoute(*tunName, selected.response.BypassLan)
 	if err != nil {
 		tun2socks.Close()
-		log.Fatalf("add route failed: %s: %v\n", cmd, err)
+		log.Fatalf("Add route failed: %s: %v\n", cmd, err)
 	}
 
-	log.Infof("%s started", tunName)
+	log.Infof("%s started", *tunName)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
@@ -109,5 +225,5 @@ func simple() {
 
 	log.SetLevel(log.InfoLevel)
 	tun2socks.Close()
-	log.Infof("closed")
+	log.Infof("Closed")
 }

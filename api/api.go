@@ -26,7 +26,7 @@ type Response struct {
 	BypassLan bool
 }
 
-func MakeQuery(query Query) ([]byte, error) {
+func MakeQuery(query *Query) ([]byte, error) {
 	buf := &bytes.Buffer{}
 	writer, err := xz.NewWriter(buf)
 	if err == nil {
@@ -86,7 +86,7 @@ func ParseQuery(message []byte) (*Query, error) {
 	return &query, nil
 }
 
-func MakeResponse(response Response) ([]byte, error) {
+func MakeResponse(response *Response) ([]byte, error) {
 	buf := &bytes.Buffer{}
 	writer, err := xz.NewWriter(buf)
 	if err == nil {

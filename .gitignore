@@ -1,3 +1,5 @@
 .idea/
 /sagerconnect
 /build/
+/infra/build/build
+/*.syso

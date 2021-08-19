@@ -8,20 +8,27 @@ import (
 	"strings"
 )
 
-func Must(err error) {
+func Must(action string, err error) {
 	if err != nil {
-		log.Fatalf("fatal: %v", err)
+		log.Fatalf("failed to %s: %v", action, err)
 	}
 }
 
-func Must0(_ interface{}, err error) {
+func Mustf(action string, err error, args ...interface{}) {
 	if err != nil {
-		log.Fatalf("fatal: %v", err)
+		Must(fmt.Sprintf(action, args), err)
 	}
 }
-func Must1(_ interface{}, _ interface{}, err error) {
+
+func Maybe(action string, err error) {
 	if err != nil {
-		log.Fatalf("fatal: %v", err)
+		log.Errorf("failed to %s: %v", action, err)
+	}
+}
+
+func Maybef(action string, err error, args ...interface{}) {
+	if err != nil {
+		Maybe(fmt.Sprintf(action, args), err)
 	}
 }
 
@@ -32,8 +39,6 @@ func ExecShell(cmdIn string, errIn error, name string, arg ...string) (cmd strin
 	cmd = strings.Join([]string{name, strings.Join(arg, " ")}, " ")
 	shell := exec.Command(name, arg...)
 	log.Debugf(">> %s", cmd)
-	shell.Stdin = os.Stdin
-	shell.Stdout = os.Stdout
 	shell.Stderr = os.Stderr
 	err = shell.Start()
 	if err == nil {
