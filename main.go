@@ -263,10 +263,8 @@ func listIfAddr() (ifAddrs []ifAddr, err error) {
 			switch v := addr.(type) {
 			case *net.IPNet:
 				ip = v.IP
-				break
 			case *net.IPAddr:
 				ip = v.IP
-				break
 			default:
 				continue
 			}

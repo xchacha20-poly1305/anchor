@@ -89,16 +89,12 @@ func main() {
 		switch arch {
 		case "arm":
 			arch = fmt.Sprint(arch, "-", build.goarm)
-			break
 		case "arm64":
 			arch = "aarch64"
-			break
 		case "386":
 			arch = "x86"
-			break
 		case "amd64":
 			arch = "x86_64"
-			break
 		}
 
 		if build.goos == "android" {
@@ -157,19 +153,6 @@ func main() {
 
 		args := []string{"build", "-o", output, "-v", "-trimpath"}
 
-		if build.goos == "linux" {
-			switch build.goarch {
-			case "riscv64":
-			case "mips":
-			case "mips64":
-			case "mips64le":
-				break
-			default:
-				args = append(args, "-linkshared")
-				break
-			}
-		}
-
 		_ = os.Setenv("GOOS", build.goos)
 		_ = os.Setenv("GOARCH", build.goarch)
 		if build.goarch == "arm" {
@@ -186,56 +169,42 @@ func main() {
 			switch build.goarch {
 			case "amd64":
 				_ = os.Setenv("CC", "x86_64-w64-mingw32-gcc")
-				break
 			case "386":
 				_ = os.Setenv("CC", "i686-w64-mingw32-gcc")
-				break
 			}
 		} else if build.goos == "linux" {
 			switch build.goarch {
 			case "amd64":
 				_ = os.Setenv("CC", "x86_64-linux-gnu-gcc")
-				break
 			case "386":
 				_ = os.Setenv("CC", "i686-linux-gnu-gcc")
-				break
 			case "arm":
 				_ = os.Setenv("CC", "arm-linux-gnueabi-gcc")
-				break
 			case "arm64":
 				_ = os.Setenv("CC", "aarch64-linux-gnu-gcc")
-				break
 			case "mips":
 				_ = os.Setenv("CC", "mips-linux-gnu-gcc")
-				break
 			case "mips64":
 				_ = os.Setenv("CC", "mips64-linux-gnuabi64-gcc")
-				break
 			case "mips64le":
 				_ = os.Setenv("CC", "mips64el-linux-gnuabi64-gcc")
-				break
 			case "risc64":
 				_ = os.Setenv("CC", "riscv64-linux-gnu-gcc")
-				break
 			}
 		} else if build.goos == "android" {
 			switch build.goarch {
 			case "arm":
 				cc, _ := os.LookupEnv("ANDROID_ARM_CC")
 				_ = os.Setenv("CC", cc)
-				break
 			case "arm64":
 				cc, _ := os.LookupEnv("ANDROID_ARM64_CC")
 				_ = os.Setenv("CC", cc)
-				break
 			case "amd64":
 				cc, _ := os.LookupEnv("ANDROID_X86_64_CC")
 				_ = os.Setenv("CC", cc)
-				break
 			case "386":
 				cc, _ := os.LookupEnv("ANDROID_X86_CC")
 				_ = os.Setenv("CC", cc)
-				break
 			}
 		} else {
 			_ = os.Unsetenv("CC")

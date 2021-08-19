@@ -292,16 +292,12 @@ func fmtDnsMessage(msg *dns.Msg) string {
 		switch question.Qtype {
 		case dns.TypeA:
 			qType = "A"
-			break
 		case dns.TypeAAAA:
 			qType = "AAAA"
-			break
 		case dns.TypeTXT:
 			qType = "TXT"
-			break
 		case dns.TypePTR:
 			qType = "PTR"
-			break
 		default:
 			qType = fmt.Sprint(question.Qtype)
 		}
@@ -317,19 +313,15 @@ func fmtDnsMessage(msg *dns.Msg) string {
 					message = fmt.Sprint(message, ", ")
 				}
 				var rContent string
-				switch rr.Header().Rrtype {
-				case dns.TypeA:
-					rContent = rr.(interface{}).(*dns.A).A.String()
-					break
-				case dns.TypeAAAA:
-					rContent = rr.(interface{}).(*dns.AAAA).AAAA.String()
-					break
-				case dns.TypeTXT:
-					rContent = strings.Join(rr.(interface{}).(*dns.TXT).Txt, " ")
-					break
-				case dns.TypePTR:
-					rContent = rr.(interface{}).(*dns.PTR).Ptr
-					break
+				switch rr := rr.(type) {
+				case *dns.A:
+					rContent = rr.A.String()
+				case *dns.AAAA:
+					rContent = rr.AAAA.String()
+				case *dns.TXT:
+					rContent = strings.Join(rr.Txt, " ")
+				case *dns.PTR:
+					rContent = rr.Ptr
 				default:
 					continue
 				}
