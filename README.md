@@ -12,8 +12,8 @@ Connect to SagerNet in the LAN (no configuration required)
 
 - Debian sid: **Tested and Working**
 - Other Linux: **Untested**
-- Windows: *Tested and Working**
-- macOS: *Tested and Working**
+- Windows: *Tested and Working*
+- macOS: *Tested and Working* *
 - FreeBSD: **Untested**
 - OpenBSD: **Untested**
 
