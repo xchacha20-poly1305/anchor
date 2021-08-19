@@ -10,4 +10,4 @@ if [ ! -x $(command -v ghr) ]; then
   rm ghr.tar.gz
 fi
 
-ghr -delete -t "$GITHUB_TOKEN" -n "v$VERSION" "v$VERSION" build
+ghr -delete -t "$GITHUB_TOKEN" -n "v$VERSION" "v$VERSION" build/release

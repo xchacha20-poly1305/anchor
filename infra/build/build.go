@@ -263,10 +263,16 @@ func main() {
 
 		// make zip or tar
 
+		os.RemoveAll("build/release")
+		err := os.Mkdir("build/release", 0777)
+		if err != nil {
+			panic(err.Error())
+		}
+
 		outDir, _ := os.Open("build")
 		dirEntries, _ := outDir.ReadDir(114)
 		for _, subDir := range dirEntries {
-			if !subDir.IsDir() {
+			if !subDir.IsDir() || subDir.Name() == "currnet" || subDir.Name() == "release" {
 				continue
 			}
 
@@ -278,7 +284,7 @@ func main() {
 				}
 
 				var outFile *os.File
-				outPath := fmt.Sprint("build/", subDir.Name(), ".zip")
+				outPath := fmt.Sprint("build/release/", subDir.Name(), ".zip")
 
 				_ = os.RemoveAll(outPath)
 				outFile, err = os.Create(outPath)
@@ -316,7 +322,7 @@ func main() {
 
 				var outFile *os.File
 
-				outPath := fmt.Sprint("build/", subDir.Name(), ".tar.gz")
+				outPath := fmt.Sprint("build/release/", subDir.Name(), ".tar.gz")
 				_ = os.RemoveAll(outPath)
 
 				outFile, err = os.Create(outPath)

@@ -28,7 +28,7 @@ type scanResult struct {
 func main() {
 	log.SetLevel(log.InfoLevel)
 
-	fs := flag.NewFlagSet("SagerNet", flag.ExitOnError)
+	fs := flag.NewFlagSet("SagerConnect", flag.ExitOnError)
 	verbose := fs.Bool("v", false, "enable debug log (override)")
 	bypass := fs.Bool("b", false, "bypass LAN route (override)")
 	selectedIndex := fs.Int("d", -1, "selected device index (skip select)")
