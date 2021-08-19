@@ -28,7 +28,7 @@ type scanResult struct {
 
 type ifAddr struct {
 	nif  *net.Interface
-	inet *net.IPNet
+	addr net.IP
 }
 
 func main() {
@@ -38,6 +38,7 @@ func main() {
 	verbose := fs.Bool("v", false, "enable debug log (override)")
 	bypass := fs.Bool("b", false, "bypass LAN route (override)")
 	selectedIndex := fs.Int("d", -1, "selected device index (skip select)")
+	immediately := fs.Bool("i", false, "skip waiting when the first device is found")
 	remoteIp := fs.String("a", "", "remote ip address (skip scan)")
 	socksPort := fs.Int("socks", 2080, "remote socks port (skip scan)")
 	dnsPort := fs.Int("dns", 6450, "remote dns port (skip scan)")
@@ -71,7 +72,7 @@ func main() {
 			go func() {
 				rErr := scanResult{false, nil, nil, nil}
 				conn, err := net.ListenUDP("udp4", &net.UDPAddr{
-					IP: ifAddr.inet.IP,
+					IP: ifAddr.addr,
 				})
 
 				core.Maybef("create multicast conn on if %s", err, ifAddr.nif.Name)
@@ -89,7 +90,7 @@ func main() {
 					rc <- rErr
 					return
 				}
-				_ = conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+				_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
 				buffer := make([]byte, 2048)
 				length, addr, err := conn.ReadFromUDP(buffer)
 
@@ -123,14 +124,25 @@ func main() {
 		}
 
 		deviceMap := make(map[string]scanResult)
-		for range ifAddrs {
+		for i := range ifAddrs {
 			result := <-rc
 			if !result.ok {
 				continue
 			}
 			deviceMap[result.addr.IP.String()] = result
+			if *immediately {
+				go func() {
+					for range ifAddrs[i:] {
+						<-rc
+					}
+					close(rc)
+				}()
+				break
+			}
 		}
-		close(rc)
+		if !*immediately {
+			close(rc)
+		}
 
 		for _, device := range deviceMap {
 			devices = append(devices, device)
@@ -247,13 +259,25 @@ func listIfAddr() (ifAddrs []ifAddr, err error) {
 		}
 
 		for _, addr := range addrs {
-			if addr, isIPNet := addr.(*net.IPNet); isIPNet && addr.IP.To4() != nil && !addr.IP.IsLoopback() && !addr.IP.IsLinkLocalUnicast() {
-				ifAddrs = append(ifAddrs, ifAddr{
-					nif:  &nif,
-					inet: addr,
-				})
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
 				break
+			case *net.IPAddr:
+				ip = v.IP
+				break
+			default:
+				continue
 			}
+			if ip.To4() == nil || ip.IsLoopback() || ip.IsLinkLocalUnicast() {
+				continue
+			}
+			ifAddrs = append(ifAddrs, ifAddr{
+				nif:  &nif,
+				addr: ip,
+			})
+			break
 		}
 	}
 
