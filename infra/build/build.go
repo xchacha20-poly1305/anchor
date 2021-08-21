@@ -175,7 +175,12 @@ func main() {
 		} else if build.goos == "linux" {
 			switch build.goarch {
 			case "amd64":
-				_ = os.Setenv("CC", "x86_64-linux-gnu-gcc")
+				_, err := exec.LookPath("x86_64-linux-gnu-gcc")
+				if err == nil {
+					_ = os.Setenv("CC", "x86_64-linux-gnu-gcc")
+				} else {
+					_ = os.Setenv("CC", "x86_64-pc-linux-gnu-gcc")
+				}
 			case "386":
 				_ = os.Setenv("CC", "i686-linux-gnu-gcc")
 			case "arm":

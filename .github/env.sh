@@ -17,11 +17,6 @@ _NDK="$ANDROID_HOME/ndk/21.4.7075529"
 [ -f "$_NDK/source.properties" ] || _NDK="$NDK"
 [ -f "$_NDK/source.properties" ] || _NDK="$ANDROID_HOME/ndk-bundle"
 
-if [ ! -f "$_NDK/source.properties" ]; then
-  read -p "Enter your NDK version: " NDK_VERSION
-  _NDK="$ANDROID_HOME/ndk/$NDK_VERSION"
-fi
-
 if [ -f "$_NDK/source.properties" ]; then
   export ANDROID_NDK_HOME=$_NDK
   export NDK=$_NDK
