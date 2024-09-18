@@ -1,14 +1,32 @@
-module github.com/sagernet/sagerconnect
+module github.com/xchacha20-poly1305/anchor
 
-go 1.16
+go 1.20
 
 require (
-	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
-	github.com/miekg/dns v1.1.43
-	github.com/pkg/errors v0.9.1
-	github.com/ulikunitz/xz v0.5.10
-	github.com/xjasonlyu/tun2socks v1.18.4-0.20210813034434-85cf694b8fed
-	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e
+	github.com/sagernet/sing v0.5.0-alpha.11.0.20240625144910-6bd878184516
+	github.com/sagernet/sing-tun v0.4.0-beta.16
+	go.uber.org/zap v1.27.0
+	golang.org/x/term v0.24.0
 )
 
-replace github.com/xjasonlyu/tun2socks v1.18.4-0.20210813034434-85cf694b8fed => github.com/sagernet/tun2socks v1.18.4-0.20210820015834-2ee7f3879e14
+require (
+	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/go-ole/go-ole v1.3.0 // indirect
+	github.com/google/btree v1.1.2 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/josharian/native v1.1.0 // indirect
+	github.com/mdlayher/netlink v1.7.2 // indirect
+	github.com/mdlayher/socket v0.4.1 // indirect
+	github.com/sagernet/fswatch v0.1.1 // indirect
+	github.com/sagernet/gvisor v0.0.0-20240428053021-e691de28565f // indirect
+	github.com/sagernet/netlink v0.0.0-20240612041022-b9a21c07ac6a // indirect
+	github.com/sagernet/nftables v0.3.0-beta.4 // indirect
+	github.com/vishvananda/netns v0.0.4 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
+	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba // indirect
+	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8 // indirect
+	golang.org/x/net v0.26.0 // indirect
+	golang.org/x/sync v0.7.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/time v0.5.0 // indirect
+)

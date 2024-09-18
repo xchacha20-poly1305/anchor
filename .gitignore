@@ -1,5 +1,4 @@
 .idea/
-/sagerconnect
-/build/
-/infra/build/build
+/anchor
 /*.syso
+/config.json

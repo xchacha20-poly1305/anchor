@@ -1,0 +1,12 @@
+{
+  "interface_name": "utun8",
+  "stack": "mixed",
+  "mtu": 9000,
+  "gso": true,
+  "auto_route": true,
+  "strict_route": false,
+  "end_point_independent_nat": true,
+  "udp_timeout": 300,
+  "include_all_networks": "false",
+  "bypass_lan": true
+}

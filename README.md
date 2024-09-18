@@ -1,20 +1,54 @@
-# SagerConnect
+# Anchor
 
-Connect to SagerNet in the LAN (no configuration required)
+[![Go Reference](https://pkg.go.dev/badge/github.com/xchacha20-poly1305/anchor.svg)](https://pkg.go.dev/github.com/xchacha20-poly1305/anchor)
 
-### Usage
+A protocol that allow switching proxy info in Lan.
 
-1. Upgrade SagerNet to 0.4-rc02 or later
-2. Enable "Allow Connections from LAN" in settings
-3. Run `sc` in terminal
+Forked from [SagerNet/SagerConnect](https://github.com/SagerNet/SagerConnect)
 
-### OS Support Status:
+# Warn
 
-- Debian sid: **Tested and Working**
-- Other Linux: **Untested**
-- Windows: *Tested and Working*
-- macOS: *Tested and Working* *
-- FreeBSD: **Untested**
-- OpenBSD: **Untested**
+I know nothing about L4 proxies and transparent proxies, and this is my first time to
+something about them. So this software is for educational and research purposes only.
+Please do not use it for illegal activities or in production environments.
 
-For macOS users: please turn off firewall to allow communicating with devices in the LAN.
+# Developing
+
+## Build
+
+```shell
+CGO_ENABLED=0 make
+```
+
+## Format
+
+```shell
+make fmt
+```
+
+## Protocol
+
+All use Big Endian.
+
+### Query:
+
+| Version | Device Name Length | Device Name |
+ |---------|--------------------|-------------|
+| 1       | 1                  | 0 to 128    |
+
+- **Version**: always constant `0x01`
+
+### Response:
+
+| Version | Dns Port | Device Name Length | Device Name | Debug | Bypass Lan | Socks Port | Socks User Length | Socks User | Socks Password Length | Socks Password |
+ |---------|----------|--------------------|-------------|-------|------------|------------|-------------------|------------|-----------------------|----------------|
+| 1       | 2        | 1                  | 0 to 128    | 1     | 1          | 2          | 1                 | 0 to 255   | 1                     | 0 to 255       |
+
+- **Version**: always constant `0x01`
+
+# Credits
+
+Inspired by: [SagerNet/SagerConnect](https://github.com/SagerNet/SagerConnect)
+
+- [SagerNet/sing-tun](https://github.com/SagerNet/sing-tun)
+- [SagerNet/sing-box](https://github.com/SagerNet/sing-box)
