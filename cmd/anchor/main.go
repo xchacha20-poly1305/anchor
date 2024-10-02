@@ -27,8 +27,10 @@ import (
 
 //go:generate goversioninfo --platform-specific
 
+const VERSION = "v0.2.0-alpha.1"
+
 func main() {
-	fs := flag.NewFlagSet("SagerConnect", flag.ExitOnError)
+	fs := flag.NewFlagSet("anchor", flag.ExitOnError)
 	logLevel := fs.String("l", zapcore.WarnLevel.String(), "Log level")
 	logOutput := fs.String("o", Stderr, "Log output.")
 	configPath := fs.String("c", "", "Configuration file path")
