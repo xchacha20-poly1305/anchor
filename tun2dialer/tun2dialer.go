@@ -72,11 +72,11 @@ func NewTun2Dialer(ctx context.Context,
 
 func (t *Tun2Dialer) NewConnection(ctx context.Context, conn net.Conn, metadata M.Metadata) (err error) {
 	if metadata.Protocol != "" {
-		t.logger.InfoContext(ctx, "inbound ", metadata.Protocol, " connection from: ", metadata.Source)
+		t.logger.DebugContext(ctx, "inbound ", metadata.Protocol, " connection from: ", metadata.Source)
 	} else {
-		t.logger.InfoContext(ctx, "inbound connection from: ", metadata.Source)
+		t.logger.DebugContext(ctx, "inbound connection from: ", metadata.Source)
 	}
-	t.logger.InfoContext(ctx, "inbound connection to: ", metadata.Destination)
+	t.logger.DebugContext(ctx, "inbound connection to: ", metadata.Destination)
 	var newConn net.Conn
 	if t.bypassLan && !N.IsPublicAddr(metadata.Destination.Addr) {
 		newConn, err = t.bypassedDialer.DialContext(ctx, N.NetworkTCP, metadata.Destination)
@@ -84,7 +84,7 @@ func (t *Tun2Dialer) NewConnection(ctx context.Context, conn net.Conn, metadata 
 		newConn, err = t.dialer.DialContext(ctx, N.NetworkTCP, metadata.Destination)
 	}
 	if err != nil {
-		t.logger.WarnContext(ctx, "failed to dial: ", err)
+		t.NewError(ctx, err)
 		return err
 	}
 	defer newConn.Close()
@@ -93,18 +93,20 @@ func (t *Tun2Dialer) NewConnection(ctx context.Context, conn net.Conn, metadata 
 
 func (t *Tun2Dialer) NewPacketConnection(ctx context.Context, conn N.PacketConn, metadata M.Metadata) (err error) {
 	if metadata.Protocol != "" {
-		t.logger.InfoContext(ctx, "inbound ", metadata.Protocol, " packet from: ", metadata.Source)
+		t.logger.DebugContext(ctx, "inbound ", metadata.Protocol, " packet from: ", metadata.Source)
 	} else {
-		t.logger.InfoContext(ctx, "inbound packet from: ", metadata.Source)
+		t.logger.DebugContext(ctx, "inbound packet from: ", metadata.Source)
 	}
-	t.logger.InfoContext(ctx, "inbound packet to: ", metadata.Destination)
+	t.logger.DebugContext(ctx, "inbound packet to: ", metadata.Destination)
 	var packetConn net.PacketConn
+	// TODO forward to DNS port from anchor.
 	if t.bypassLan && !N.IsPublicAddr(metadata.Destination.Addr) && metadata.Destination.Port != DNSPort {
 		packetConn, err = t.bypassedDialer.ListenPacket(ctx, metadata.Destination)
 	} else {
 		packetConn, err = t.dialer.ListenPacket(ctx, metadata.Destination)
 	}
 	if err != nil {
+		t.NewError(ctx, err)
 		return E.Cause(err, "listen packet")
 	}
 	defer packetConn.Close()
@@ -115,7 +117,7 @@ func (t *Tun2Dialer) NewPacketConnection(ctx context.Context, conn N.PacketConn,
 func (t *Tun2Dialer) NewError(ctx context.Context, err error) {
 	_ = common.Close(err)
 	if E.IsClosedOrCanceled(err) {
-		t.logger.DebugContext(ctx, "connection closed: ", err)
+		t.logger.InfoContext(ctx, "connection closed: ", err)
 		return
 	}
 	t.logger.ErrorContext(ctx, err)

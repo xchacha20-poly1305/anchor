@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"strings"
 	"syscall"
 
 	"github.com/sagernet/sing-tun"
@@ -30,7 +29,7 @@ import (
 
 func main() {
 	fs := flag.NewFlagSet("SagerConnect", flag.ExitOnError)
-	logLevel := fs.String("l", "debug", "Log level")
+	logLevel := fs.String("l", zapcore.WarnLevel.String(), "Log level")
 	logOutput := fs.String("o", Stderr, "Log output.")
 	configPath := fs.String("c", "", "Configuration file path")
 	selectedIndex := fs.Int("d", -1, "selected device index (skip select)")
@@ -93,7 +92,7 @@ func main() {
 		for _, addr := range ifAddrs {
 			result, err := addr.scan(query)
 			if err != nil {
-				if !strings.Contains(err.Error(), "timeout") {
+				if !E.IsTimeout(err) {
 					logger.Error(err)
 				}
 				continue
@@ -173,14 +172,14 @@ func main() {
 
 	networkMonitor, err := tun.NewNetworkUpdateMonitor(logger)
 	if err != nil {
-		logger.Fatal("create network update monitor: ", err)
+		logger.Fatal("Create network update monitor: ", err)
 	}
 	interfaceMonitor, err := tun.NewDefaultInterfaceMonitor(networkMonitor, logger, tun.DefaultInterfaceMonitorOptions{
 		OverrideAndroidVPN:    false,
 		UnderNetworkExtension: false,
 	})
 	if err != nil {
-		logger.Fatal("create default interface monitor: ", err)
+		logger.Fatal("Create default interface monitor: ", err)
 	}
 	interfaceFinder := control.NewDefaultInterfaceFinder()
 	dialer := dial.New(interfaceFinder, interfaceMonitor, config.BindInterface)
@@ -196,23 +195,24 @@ func main() {
 
 	tunOption, err := config.ForTun2Dialer(logger, interfaceMonitor)
 	if err != nil {
-		logger.Fatal("build Tun config: ", err)
+		logger.Fatal("Build Tun config: ", err)
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	instance, err := tun2dialer.NewTun2Dialer(ctx, logger, tunOption, interfaceFinder, socksDialer, dialer)
 	if err != nil {
-		logger.Fatal("create tun2dialer instance: ", err)
+		logger.Fatal("Create tun2dialer instance: ", err)
 	}
 	err = instance.Start()
 	if err != nil {
-		logger.Fatal("start tun2dialer: ", err)
+		logger.Fatal("try start tun2dialer: ", err)
 	}
+	logger.Warn("Started")
 
 	<-ctx.Done()
 	cancel()
 	err = instance.Close()
 	if err != nil {
-		log.Fatal("error in closing tun2dialer: ", err)
+		log.Fatal("Close tun2dialer: ", err)
 	}
-	logger.Info("exit")
+	logger.Info("Exit")
 }
