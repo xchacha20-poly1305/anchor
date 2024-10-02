@@ -7,12 +7,14 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/control"
 	E "github.com/sagernet/sing/common/exceptions"
+	F "github.com/sagernet/sing/common/format"
 	"github.com/sagernet/sing/common/json"
 	M "github.com/sagernet/sing/common/metadata"
 	"github.com/sagernet/sing/protocol/socks"
@@ -27,10 +29,11 @@ import (
 
 //go:generate goversioninfo --platform-specific
 
-const VERSION = "v0.2.0-alpha.1"
+const VERSION = "v0.2.0-beta.0"
 
 func main() {
 	fs := flag.NewFlagSet("anchor", flag.ExitOnError)
+	showVersion := fs.Bool("v", false, "Show version")
 	logLevel := fs.String("l", zapcore.WarnLevel.String(), "Log level")
 	logOutput := fs.String("o", Stderr, "Log output.")
 	configPath := fs.String("c", "", "Configuration file path")
@@ -40,6 +43,11 @@ func main() {
 	socksPort := fs.Int("socks", 2080, "remote socks port (skip scan)")
 	dnsPort := fs.Int("dns", 6450, "remote dns port (skip scan)")
 	_ = fs.Parse(os.Args[1:])
+
+	if *showVersion || isShowVersion(fs.Arg(0)) {
+		_, _ = os.Stdout.WriteString(F.ToString("Anchor: ", VERSION))
+		os.Exit(0)
+	}
 
 	level, err := zapcore.ParseLevel(*logLevel)
 	if err != nil {
@@ -217,4 +225,13 @@ func main() {
 		log.Fatal("Close tun2dialer: ", err)
 	}
 	logger.Info("Exit")
+}
+
+func isShowVersion(str string) bool {
+	switch strings.ToLower(str) {
+	case "v", "version":
+		return true
+	default:
+		return false
+	}
 }
