@@ -12,27 +12,27 @@ import (
 )
 
 type ScanResult struct {
-	addr     *net.UDPAddr
-	nif      *net.Interface
-	response *anchor.Response
+	addr         *net.UDPAddr
+	netInterface *net.Interface
+	response     *anchor.Response
 }
 
-func (a *ifAddr) scan(query []byte) (*ScanResult, error) {
+func (a *interfaceWithAddr) scan(query []byte) (*ScanResult, error) {
 	result := &ScanResult{
-		nif: a.nif,
+		netInterface: a.netInterface,
 	}
 	conn, err := net.ListenUDP(N.NetworkUDP+"4", &net.UDPAddr{
 		IP: a.addr,
 	})
 	if err != nil {
-		return nil, E.Cause(err, "create multicast conn on if ", a.nif.Name)
+		return nil, E.Cause(err, "create multicast conn on if ", a.netInterface.Name)
 	}
 	_, err = conn.WriteTo(query, &net.UDPAddr{
 		IP:   net.IPv4bcast,
-		Port: anchor.ListenPort,
+		Port: anchor.Port,
 	})
 	if err != nil {
-		return nil, E.Cause(err, "send scan query on ", a.nif.Name)
+		return nil, E.Cause(err, "send scan query on ", a.netInterface.Name)
 	}
 	_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
 	buffer := make([]byte, anchor.MaxResponseSize)
@@ -54,21 +54,21 @@ func (a *ifAddr) scan(query []byte) (*ScanResult, error) {
 	return result, nil
 }
 
-type ifAddr struct {
-	nif  *net.Interface
-	addr net.IP
+type interfaceWithAddr struct {
+	netInterface *net.Interface
+	addr         net.IP
 }
 
-func listInterfaceAddr(logger *log.Logger) (ifAddrs []ifAddr) {
-	ifs, err := net.Interfaces()
+func listInterfaceAddr(logger *log.Logger) (interfaceWithAddrs []interfaceWithAddr) {
+	netInterfaces, err := net.Interfaces()
 	if err != nil {
 		logger.Fatal("get interfaces: ", err)
 	}
 
-	for _, nif := range ifs {
-		addrs, err := nif.Addrs()
+	for _, netInterface := range netInterfaces {
+		addrs, err := netInterface.Addrs()
 		if err != nil {
-			logger.Error("get the address of interface [", nif.Name, "]: ", err)
+			logger.Error("get the address of interface [", netInterface.Name, "]: ", err)
 			continue
 		}
 
@@ -85,9 +85,9 @@ func listInterfaceAddr(logger *log.Logger) (ifAddrs []ifAddr) {
 			if ip.To4() == nil || ip.IsLoopback() || ip.IsLinkLocalUnicast() {
 				continue
 			}
-			ifAddrs = append(ifAddrs, ifAddr{
-				nif:  &nif,
-				addr: ip,
+			interfaceWithAddrs = append(interfaceWithAddrs, interfaceWithAddr{
+				netInterface: &netInterface,
+				addr:         ip,
 			})
 			break
 		}

@@ -1,3 +1,4 @@
+// Package log implements custom log for logger.ContextLogger.
 package log
 
 import (

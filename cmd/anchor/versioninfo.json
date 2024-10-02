@@ -20,16 +20,16 @@
   },
   "StringFileInfo": {
     "Comments": "",
-    "CompanyName": "SagerNet",
-    "FileDescription": "Connect to SagerNet in the LAN",
+    "CompanyName": "anchor",
+    "FileDescription": "Connect to proxy in the LAN",
     "FileVersion": "0",
     "InternalName": "",
     "LegalCopyright": "SagerNet contributors",
     "LegalTrademarks": "",
-    "OriginalFilename": "sc.exe",
+    "OriginalFilename": "anchor.exe",
     "PrivateBuild": "",
-    "ProductName": "SagerConnect",
-    "ProductVersion": "v114.514.1919",
+    "ProductName": "anchor",
+    "ProductVersion": "v0.2.0-alpha.0",
     "SpecialBuild": ""
   },
   "VarFileInfo": {

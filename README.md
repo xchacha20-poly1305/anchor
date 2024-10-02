@@ -28,7 +28,9 @@ make fmt
 
 ## Protocol
 
-All use Big Endian.
+* All use Big Endian.
+
+* Target port is `45947`, which generated randomly.
 
 ### Query:
 

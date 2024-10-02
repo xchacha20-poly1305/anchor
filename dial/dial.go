@@ -1,3 +1,4 @@
+// Package dial provides implementations for N.Dialer.
 package dial
 
 import (

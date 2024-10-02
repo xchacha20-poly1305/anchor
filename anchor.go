@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	Version    = 0x01
-	ListenPort = 45947
+	Version = 0x01
+	Port    = 45947
 
 	MaxDeviceName = 128
 	MaxAuth       = math.MaxUint8 // RFC 1929

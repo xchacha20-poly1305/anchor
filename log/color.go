@@ -18,7 +18,6 @@ const (
 	ColorWhite   = "\033[37m"
 )
 
-// custom level encoder with color
 func colorfulLevelEncoder(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
 	var color string
 	switch level {
@@ -38,7 +37,6 @@ func colorfulLevelEncoder(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder
 	enc.AppendString(color + level.CapitalString() + ColorReset)
 }
 
-// custom time encoder with color
 func colorfulTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(ColorYellow + t.Format(time.RFC3339) + ColorReset)
 }
