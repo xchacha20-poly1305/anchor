@@ -198,7 +198,6 @@ func main() {
 	if err != nil {
 		logger.Fatal("build Tun config: ", err)
 	}
-	// tunOption.DNSServers = append(tunOption.DNSServers, netip.MustParseAddr("8.8.8.8"))
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	instance, err := tun2dialer.NewTun2Dialer(ctx, logger, tunOption, interfaceFinder, socksDialer, dialer)
 	if err != nil {

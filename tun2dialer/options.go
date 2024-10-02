@@ -20,4 +20,5 @@ const (
 	UDPTimeout = 5 * time.Minute
 	MTU        = 9000
 	Stack      = "mixed"
+	DNSServer  = "8.8.8.8"
 )

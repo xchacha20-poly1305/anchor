@@ -29,9 +29,18 @@ type Options struct {
 	IncludeInterface         []string       `json:"include_interface,omitempty"`
 	ExcludeInterface         []string       `json:"exclude_interface,omitempty"`
 	BypassLAN                bool           `json:"bypass_lan,omitempty"`
+	DNS                      []string       `json:"dns,omitempty"`
 }
 
 func (o *Options) ForTun2Dialer(ctxLogger logger.ContextLogger, interfaceMonitor tun.DefaultInterfaceMonitor) (tun2dialer.Options, error) {
+	dnsServers := make([]netip.Addr, 0, len(o.DNS))
+	for _, dns := range o.DNS {
+		addr, err := netip.ParseAddr(dns)
+		if err != nil {
+			return tun2dialer.Options{}, err
+		}
+		dnsServers = append(dnsServers, addr)
+	}
 	return tun2dialer.Options{
 		Options: tun.Options{
 			Name:                     o.InterfaceName,
@@ -40,6 +49,7 @@ func (o *Options) ForTun2Dialer(ctxLogger logger.ContextLogger, interfaceMonitor
 			MTU:                      o.MTU,
 			GSO:                      o.GSO,
 			AutoRoute:                *o.AutoRoute,
+			DNSServers:               dnsServers,
 			StrictRoute:              o.StrictRoute,
 			Inet4RouteAddress:        o.Inet4RouteAddress,
 			Inet6RouteAddress:        o.Inet6RouteAddress,
@@ -82,5 +92,8 @@ func (o *Options) ApplyDefault() {
 	if o.AutoRoute == nil {
 		b := true
 		o.AutoRoute = &b
+	}
+	if len(o.DNS) == 0 {
+		o.DNS = []string{tun2dialer.DNSServer}
 	}
 }
