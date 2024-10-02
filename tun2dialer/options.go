@@ -21,4 +21,5 @@ const (
 	MTU        = 9000
 	Stack      = "mixed"
 	DNSServer  = "8.8.8.8"
+	DNSPort    = 53
 )

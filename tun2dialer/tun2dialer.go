@@ -99,7 +99,7 @@ func (t *Tun2Dialer) NewPacketConnection(ctx context.Context, conn N.PacketConn,
 	}
 	t.logger.InfoContext(ctx, "inbound packet to: ", metadata.Destination)
 	var packetConn net.PacketConn
-	if t.bypassLan && !N.IsPublicAddr(metadata.Destination.Addr) {
+	if t.bypassLan && !N.IsPublicAddr(metadata.Destination.Addr) && metadata.Destination.Port != DNSPort {
 		packetConn, err = t.bypassedDialer.ListenPacket(ctx, metadata.Destination)
 	} else {
 		packetConn, err = t.dialer.ListenPacket(ctx, metadata.Destination)
