@@ -61,7 +61,7 @@ func ParseQuery(message []byte) (*Query, error) {
 	return query, nil
 }
 
-func (q *Query) MarshalBinary() ([]byte, error) {
+func (q Query) MarshalBinary() ([]byte, error) {
 	buf := bytes.NewBuffer(make([]byte, 0, MinQuerySize))
 	common.Must(binary.Write(buf, binary.BigEndian, q.Version))
 	deviceName := []byte(q.DeviceName)
@@ -146,7 +146,7 @@ func ParseResponse(message []byte) (*Response, error) {
 	return response, nil
 }
 
-func (r *Response) MarshalBinary() ([]byte, error) {
+func (r Response) MarshalBinary() ([]byte, error) {
 	if len(r.User.Username) > MaxAuth || len(r.User.Password) > MaxAuth {
 		return nil, E.New("invalid auth length")
 	}

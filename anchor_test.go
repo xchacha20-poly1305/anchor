@@ -2,6 +2,8 @@ package anchor
 
 import (
 	"testing"
+
+	"github.com/sagernet/sing/common/auth"
 )
 
 func TestData(t *testing.T) {
@@ -19,12 +21,14 @@ func TestData(t *testing.T) {
 		t.Fatal("err parse query")
 	}
 	r := &Response{
-		Version:       Version,
-		DnsPort:       6450,
-		DeviceName:    deviceName,
-		SocksPort:     2080,
-		SocksUser:     "invalid",
-		SocksPassword: "sekai",
+		Version:    Version,
+		DnsPort:    6450,
+		DeviceName: deviceName,
+		SocksPort:  2080,
+		User: auth.User{
+			Username: "hello",
+			Password: "sekai",
+		},
 	}
 	m, err = r.MarshalBinary()
 	if err != nil {
@@ -38,8 +42,7 @@ func TestData(t *testing.T) {
 		parsedResponse.SocksPort != r.SocksPort ||
 		parsedResponse.DnsPort != r.DnsPort ||
 		parsedResponse.DeviceName != deviceName ||
-		parsedResponse.SocksUser != r.SocksUser ||
-		parsedResponse.SocksPassword != r.SocksPassword {
+		parsedResponse.User != r.User {
 		t.Fatal("err parse response")
 	}
 }

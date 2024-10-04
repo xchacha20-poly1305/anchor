@@ -89,7 +89,7 @@ func main() {
 			logger.Fatal("get host name: ", err)
 		}
 
-		query, err := (&anchor.Query{Version: anchor.Version, DeviceName: deviceName}).MarshalBinary()
+		query, err := anchor.Query{Version: anchor.Version, DeviceName: deviceName}.MarshalBinary()
 		if err != nil {
 			logger.Fatal("make scan query: ", err)
 		}
