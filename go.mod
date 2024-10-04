@@ -3,11 +3,13 @@ module github.com/xchacha20-poly1305/anchor
 go 1.20
 
 require (
-	github.com/sagernet/sing v0.5.0-alpha.11.0.20240625144910-6bd878184516
-	github.com/sagernet/sing-tun v0.4.0-beta.16
+	github.com/sagernet/sing v0.5.0-beta.2.0.20240922141512-c63546470b53
+	github.com/sagernet/sing-tun v0.4.0-beta.16.0.20240923015907-9ba70c3f7965
 	go.uber.org/zap v1.27.0
 	golang.org/x/term v0.24.0
 )
+
+// replace github.com/sagernet/sing-tun => ../sing-tun
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect

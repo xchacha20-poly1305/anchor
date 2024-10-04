@@ -180,18 +180,27 @@ func main() {
 	logger.Info("SOCKS port: ", selected.response.SocksPort)
 	logger.Info("DNS port: ", selected.response.DnsPort)
 
+	interfaceFinder := control.NewDefaultInterfaceFinder()
 	networkMonitor, err := tun.NewNetworkUpdateMonitor(logger)
 	if err != nil {
 		logger.Fatal("Create network update monitor: ", err)
 	}
+	err = networkMonitor.Start()
+	if err != nil {
+		logger.Fatal("Start network monitor: ", err)
+	}
 	interfaceMonitor, err := tun.NewDefaultInterfaceMonitor(networkMonitor, logger, tun.DefaultInterfaceMonitorOptions{
+		InterfaceFinder:       interfaceFinder,
 		OverrideAndroidVPN:    false,
 		UnderNetworkExtension: false,
 	})
 	if err != nil {
 		logger.Fatal("Create default interface monitor: ", err)
 	}
-	interfaceFinder := control.NewDefaultInterfaceFinder()
+	err = interfaceMonitor.Start()
+	if err != nil {
+		logger.Fatal("Start interface monitor: ", err)
+	}
 	dialer := dial.New(interfaceFinder, interfaceMonitor, config.BindInterface)
 	serverAddr := M.SocksaddrFromNet(selected.addr)
 	serverAddr.Port = selected.response.SocksPort
@@ -220,9 +229,9 @@ func main() {
 
 	<-ctx.Done()
 	cancel()
-	err = instance.Close()
+	err = common.Close(instance, interfaceMonitor, networkMonitor)
 	if err != nil {
-		log.Fatal("Close tun2dialer: ", err)
+		log.Fatal("Close got error: ", err)
 	}
 	logger.Info("Exit")
 }

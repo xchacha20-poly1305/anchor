@@ -77,8 +77,8 @@ func (o *Options) ApplyDefault() {
 	if o.Stack == "" {
 		o.Stack = tun2dialer.Stack
 	}
-	if o.BindInterface == "" {
-		o.BindInterface = tun.CalculateInterfaceName("anchor")
+	if o.InterfaceName == "" {
+		o.InterfaceName = tun.CalculateInterfaceName("anchor")
 	}
 	if len(o.Inet4Address) == 0 {
 		o.Inet4Address = []netip.Prefix{netip.MustParsePrefix("172.19.0.1/30")}
