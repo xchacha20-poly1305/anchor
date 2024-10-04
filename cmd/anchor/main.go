@@ -29,7 +29,7 @@ import (
 
 //go:generate goversioninfo --platform-specific
 
-const VERSION = "v0.2.0-beta.0"
+const VERSION = "v0.2.0-beta.2"
 
 func main() {
 	fs := flag.NewFlagSet("anchor", flag.ExitOnError)
