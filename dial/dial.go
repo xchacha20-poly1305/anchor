@@ -2,11 +2,8 @@
 package dial
 
 import (
-	"runtime"
-
 	tun "github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common/control"
-	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
 )
 
@@ -24,19 +21,13 @@ func New(finder control.InterfaceFinder, monitor tun.DefaultInterfaceMonitor, bi
 	var bindFunc control.Func
 	if bindInterface == "" {
 		bindFunc = control.BindToInterfaceFunc(finder, func(network string, address string) (name string, index int, err error) {
-			remoteAddr := M.ParseSocksaddr(address).Addr
-			switch runtime.GOOS {
-			case "linux", "android":
-				name, index = monitor.DefaultInterface(remoteAddr)
-				if index == -1 {
-					err = tun.ErrNoRoute
-				}
-			default:
-				index = monitor.DefaultInterfaceIndex(remoteAddr)
-				if index == -1 {
-					err = tun.ErrNoRoute
-				}
+			defaultInterface := monitor.DefaultInterface()
+			if defaultInterface == nil {
+				err = tun.ErrNoRoute
+				return
 			}
+			name = defaultInterface.Name
+			index = defaultInterface.Index
 			return
 		})
 	} else {

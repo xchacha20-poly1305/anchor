@@ -4,32 +4,32 @@ import (
 	"net/netip"
 
 	tun "github.com/sagernet/sing-tun"
+	"github.com/sagernet/sing/common/json/badoption"
 	"github.com/sagernet/sing/common/logger"
 
 	"github.com/xchacha20-poly1305/anchor/tun2dialer"
 )
 
 type Options struct {
-	BindInterface            string         `json:"bind_interface,omitempty"`
-	InterfaceName            string         `json:"interface_name,omitempty"`
-	Stack                    string         `json:"stack,omitempty"`
-	MTU                      uint32         `json:"mtu,omitempty"`
-	GSO                      bool           `json:"gso,omitempty"`
-	AutoRoute                *bool          `json:"auto_route,omitempty"`
-	StrictRoute              bool           `json:"strict_route,omitempty"`
-	EndPointIndependentNat   bool           `json:"end_point_independent_nat,omitempty"`
-	UDPTimeout               int64          `json:"udp_timeout,omitempty"` // Second
-	IncludeAllNetworks       bool           `json:"include_all_networks,omitempty"`
-	Inet4Address             []netip.Prefix `json:"inet4_address,omitempty"`
-	Inet6Address             []netip.Prefix `json:"inet6_address,omitempty"`
-	Inet4RouteAddress        []netip.Prefix `json:"inet4_route_address,omitempty"`
-	Inet6RouteAddress        []netip.Prefix `json:"inet6_route_address,omitempty"`
-	Inet4RouteExcludeAddress []netip.Prefix `json:"inet4_route_exclude_address,omitempty"`
-	Inet6RouteExcludeAddress []netip.Prefix `json:"inet6_route_exclude_address,omitempty"`
-	IncludeInterface         []string       `json:"include_interface,omitempty"`
-	ExcludeInterface         []string       `json:"exclude_interface,omitempty"`
-	BypassLAN                bool           `json:"bypass_lan,omitempty"`
-	DNS                      []string       `json:"dns,omitempty"`
+	BindInterface            string                           `json:"bind_interface,omitempty"`
+	InterfaceName            string                           `json:"interface_name,omitempty"`
+	Stack                    string                           `json:"stack,omitempty"`
+	MTU                      uint32                           `json:"mtu,omitempty"`
+	GSO                      bool                             `json:"gso,omitempty"`
+	AutoRoute                *bool                            `json:"auto_route,omitempty"`
+	StrictRoute              bool                             `json:"strict_route,omitempty"`
+	UDPTimeout               badoption.Duration               `json:"udp_timeout,omitempty"` // Second
+	IncludeAllNetworks       bool                             `json:"include_all_networks,omitempty"`
+	Inet4Address             badoption.Listable[netip.Prefix] `json:"inet4_address,omitempty"`
+	Inet6Address             badoption.Listable[netip.Prefix] `json:"inet6_address,omitempty"`
+	Inet4RouteAddress        badoption.Listable[netip.Prefix] `json:"inet4_route_address,omitempty"`
+	Inet6RouteAddress        badoption.Listable[netip.Prefix] `json:"inet6_route_address,omitempty"`
+	Inet4RouteExcludeAddress badoption.Listable[netip.Prefix] `json:"inet4_route_exclude_address,omitempty"`
+	Inet6RouteExcludeAddress badoption.Listable[netip.Prefix] `json:"inet6_route_exclude_address,omitempty"`
+	IncludeInterface         badoption.Listable[string]       `json:"include_interface,omitempty"`
+	ExcludeInterface         badoption.Listable[string]       `json:"exclude_interface,omitempty"`
+	BypassLAN                bool                             `json:"bypass_lan,omitempty"`
+	DNS                      badoption.Listable[string]       `json:"dns,omitempty"`
 }
 
 func (o *Options) ForTun2Dialer(ctxLogger logger.ContextLogger, interfaceMonitor tun.DefaultInterfaceMonitor) (tun2dialer.Options, error) {
@@ -62,11 +62,10 @@ func (o *Options) ForTun2Dialer(ctxLogger logger.ContextLogger, interfaceMonitor
 			InterfaceMonitor:         interfaceMonitor,
 			Logger:                   ctxLogger,
 		},
-		Stack:                  o.Stack,
-		EndPointIndependentNat: o.EndPointIndependentNat,
-		UDPTimeout:             o.UDPTimeout,
-		IncludeAllNetworks:     o.IncludeAllNetworks,
-		BypassLAN:              o.BypassLAN,
+		Stack:              o.Stack,
+		UDPTimeout:         o.UDPTimeout.Build(),
+		IncludeAllNetworks: o.IncludeAllNetworks,
+		BypassLAN:          o.BypassLAN,
 	}, nil
 }
 
@@ -87,7 +86,7 @@ func (o *Options) ApplyDefault() {
 		o.Inet6Address = []netip.Prefix{netip.MustParsePrefix("fdfe:dcba:9876::1/126")}
 	}*/
 	if o.UDPTimeout <= 0 {
-		o.UDPTimeout = int64(tun2dialer.UDPTimeout.Seconds())
+		o.UDPTimeout = badoption.Duration(tun2dialer.UDPTimeout)
 	}
 	if o.AutoRoute == nil {
 		b := true

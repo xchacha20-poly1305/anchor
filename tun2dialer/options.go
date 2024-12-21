@@ -9,11 +9,10 @@ import (
 // Options is option for Tun2Dialer
 type Options struct {
 	tun.Options
-	Stack                  string
-	EndPointIndependentNat bool
-	UDPTimeout             int64
-	IncludeAllNetworks     bool
-	BypassLAN              bool
+	Stack              string
+	UDPTimeout         time.Duration
+	IncludeAllNetworks bool
+	BypassLAN          bool
 }
 
 const (
