@@ -27,6 +27,7 @@ func (a *interfaceWithAddr) scan(query []byte) (*ScanResult, error) {
 	if err != nil {
 		return nil, E.Cause(err, "create multicast conn on if ", a.netInterface.Name)
 	}
+	defer conn.Close()
 	_, err = conn.WriteTo(query, &net.UDPAddr{
 		IP:   net.IPv4bcast,
 		Port: anchor.Port,
@@ -41,10 +42,6 @@ func (a *interfaceWithAddr) scan(query []byte) (*ScanResult, error) {
 		return nil, err
 	}
 	result.addr = addr
-	err = conn.Close()
-	if err != nil {
-		return nil, E.Cause(err, "close scan conn")
-	}
 
 	result.response, err = anchor.ParseResponse(buffer[:length])
 	if err != nil {
