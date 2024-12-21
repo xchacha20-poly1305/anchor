@@ -42,9 +42,9 @@ make fmt
 
 ### Response:
 
-| Version | Dns Port | Device Name Length | Device Name | Socks Port | Socks User Length | Socks User | Socks Password Length | Socks Password |
-|---------|----------|--------------------|-------------|------------|-------------------|------------|-----------------------|----------------|
-| 1       | 2        | 1                  | 0 to 128    | 2          | 1                 | 0 to 255   | 1                     | 0 to 255       |
+| Version | Dns Port | Device Name Length | Device Name | Socks Port |
+|---------|----------|--------------------|-------------|------------|
+| 1       | 2        | 1                  | 0 to 128    | 2          |
 
 - **Version**: always constant `0x01`
 

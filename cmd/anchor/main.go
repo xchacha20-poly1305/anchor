@@ -208,8 +208,8 @@ func main() {
 		dialer,
 		serverAddr,
 		socks.Version5,
-		selected.response.User.Username,
-		selected.response.User.Password,
+		"",
+		"",
 	)
 
 	tunOption, err := config.ForTun2Dialer(logger, interfaceMonitor)

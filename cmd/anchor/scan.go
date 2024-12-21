@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"net"
 	"time"
 
@@ -37,13 +38,13 @@ func (a *interfaceWithAddr) scan(query []byte) (*ScanResult, error) {
 	}
 	_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
 	buffer := make([]byte, anchor.MaxResponseSize)
-	length, addr, err := conn.ReadFromUDP(buffer)
+	n, addr, err := conn.ReadFromUDP(buffer)
 	if err != nil {
 		return nil, err
 	}
 	result.addr = addr
 
-	result.response, err = anchor.ParseResponse(buffer[:length])
+	result.response, err = anchor.ParseResponse(bytes.NewReader(buffer[:n]))
 	if err != nil {
 		return nil, E.Cause(err, "parse response")
 	}
