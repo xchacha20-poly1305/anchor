@@ -22,94 +22,62 @@ func Test_Service(t *testing.T) {
 		DeviceName: "test_service",
 		SocksPort:  1080,
 	}
-	service := New(context.Background(), logger.NOP(), response, nil)
-
 	listenAddr := &net.UDPAddr{
-		IP: net.IP{127, 0, 0, 0},
+		IP:   net.IP{127, 0, 0, 0},
+		Port: anchor.Port,
 	}
-	packetConn := common.Must1(net.ListenUDP(N.NetworkUDP, listenAddr)) // For test, we don't set standard anchor port to listen.
-	defer packetConn.Close()
-	err := service.Start(packetConn)
+	const RejectDevice = "rejectable"
+	service := New(context.Background(), logger.NOP(), listenAddr, response, func(_ net.Addr, deviceName string) bool {
+		return deviceName == RejectDevice
+	})
+
+	err := service.Start()
 	if err != nil {
 		t.Fatalf("start service: %v", err)
 	}
 	defer service.Close()
-	err = service.Start(packetConn)
+	err = service.Start()
 	if err == nil {
 		t.Fatal("try start again but not got any error")
+	}
+
+	connect := func(query []byte, target net.Addr) (*anchor.Response, error) {
+		localConn := common.Must1(net.ListenUDP(N.NetworkUDP, nil))
+		defer localConn.Close()
+		common.Must1(localConn.WriteTo(query, target))
+		const waitTimeout = 5 * time.Second
+		common.Must(localConn.SetReadDeadline(time.Now().Add(waitTimeout)))
+		buffer := buf.NewSize(anchor.MaxResponseSize)
+		defer buffer.Release()
+		_, _, err := buffer.ReadPacketFrom(localConn)
+		if err != nil {
+			return nil, err
+		}
+		return anchor.ParseResponse(buffer)
 	}
 
 	query := anchor.Query{
 		Version:    anchor.Version,
 		DeviceName: "common",
 	}
-	const RejectDevice = "rejectable"
 	rejectQuery := anchor.Query{
 		Version:    anchor.Version,
 		DeviceName: RejectDevice,
 	}
-	testQuery := func(name string, wantReject bool) {
-		connect := func(query []byte, target net.Addr) (*anchor.Response, error) {
-			localConn := common.Must1(net.ListenUDP(N.NetworkUDP, nil))
-			defer localConn.Close()
-			common.Must1(localConn.WriteTo(query, target))
-			const waitTimeout = 5 * time.Second
-			common.Must(localConn.SetReadDeadline(time.Now().Add(waitTimeout)))
-			buffer := buf.NewSize(anchor.MaxResponseSize)
-			defer buffer.Release()
-			_, _, err := buffer.ReadPacketFrom(localConn)
-			if err != nil {
-				return nil, err
-			}
-			return anchor.ParseResponse(buffer)
-		}
-
-		resp, err := connect(common.Must1(query.MarshalBinary()), packetConn.LocalAddr())
-		if err != nil {
-			t.Errorf("[%s] failed: %v", name, err)
-			return
-		}
-		if !reflect.DeepEqual(resp, response) {
-			t.Errorf("[%s] not same", name)
-			return
-		}
-
-		rejectResp, err := connect(common.Must1(rejectQuery.MarshalBinary()), packetConn.LocalAddr())
-		if wantReject {
-			if err == nil {
-				t.Errorf("[%s] wants reject but failed: %v", name, err)
-			}
-			return
-		}
-		if err != nil {
-			t.Errorf("[%s] reject failed: %v", name, err)
-			return
-		}
-		if !reflect.DeepEqual(rejectResp, response) {
-			t.Errorf("[%s] reject not same", name)
-			return
-		}
+	resp, err := connect(common.Must1(query.MarshalBinary()), listenAddr)
+	if err != nil {
+		t.Fatalf("try send query: %v", err)
 	}
-	testQuery("No Reject", false)
-
-	service.UpdateResponse(response, func(_ net.Addr, deviceName string) bool {
-		return deviceName == RejectDevice
-	})
-	testQuery("Reject", true)
+	if !reflect.DeepEqual(resp, response) {
+		t.Fatalf("receive invalid response")
+	}
+	_, err = connect(common.Must1(rejectQuery.MarshalBinary()), listenAddr)
+	if err == nil {
+		t.Fatalf("want reject but not")
+	}
 
 	err = service.Close()
 	if err != nil {
 		t.Fatalf("close: %v", err)
-	}
-
-	packetConn = common.Must1(net.ListenUDP(N.NetworkUDP, listenAddr))
-	err = service.Start(packetConn)
-	if err != nil {
-		t.Fatalf("try reuse instance: %v", err)
-	}
-	testQuery("Reject + reuse", true)
-	err = service.Close()
-	if err != nil {
-		t.Fatalf("close again: %v", err)
 	}
 }
