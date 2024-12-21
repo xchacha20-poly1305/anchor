@@ -6,7 +6,6 @@ require (
 	github.com/sagernet/sing v0.6.0-beta.2
 	github.com/sagernet/sing-tun v0.6.0-beta.6
 	go.uber.org/zap v1.27.0
-	golang.org/x/term v0.27.0
 )
 
 // replace github.com/sagernet/sing-tun => ../sing-tun

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"net"
 	"os"
 	"os/signal"
@@ -24,7 +25,6 @@ import (
 	"github.com/xchacha20-poly1305/anchor/log"
 	"github.com/xchacha20-poly1305/anchor/tun2dialer"
 	"go.uber.org/zap/zapcore"
-	"golang.org/x/term"
 )
 
 //go:generate goversioninfo --platform-specific
@@ -144,14 +144,14 @@ func main() {
 			selected = devices[*selectedIndex-1]
 		} else {
 			for {
-				terminal := term.NewTerminal(os.Stdin, "> ")
-				terminal.SetPrompt("Select device to connect: ")
-				line, err := terminal.ReadLine()
+				_, _ = os.Stdout.WriteString("Select device to connect: ")
+				var line string
+				_, err = fmt.Scanln(&line)
 				if err != nil {
 					logger.Fatal("failed to read selection: ", err)
 				}
 				index, err := strconv.ParseUint(line, 10, 8)
-				if err != nil || deviceSize < int(index) {
+				if err != nil || index <= 0 || int(index) > deviceSize {
 					logger.Error("Invalid device selected: ", line)
 					continue
 				}
