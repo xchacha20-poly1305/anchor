@@ -38,7 +38,7 @@ make fmt
  |---------|--------------------|-------------|
 | 1       | 1                  | 0 to 128    |
 
-- **Version**: always constant `0x01`
+- **Version**: always constant `0x02`
 
 ### Response:
 
@@ -46,7 +46,7 @@ make fmt
 |---------|----------|--------------------|-------------|------------|
 | 1       | 2        | 1                  | 0 to 128    | 2          |
 
-- **Version**: always constant `0x01`
+- **Version**: always constant `0x02`
 
 # Credits
 
