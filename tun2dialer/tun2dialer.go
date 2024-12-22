@@ -115,7 +115,7 @@ func (t *Tun2Dialer) routeConnection(ctx context.Context, conn net.Conn, source,
 	err = N.ReportConnHandshakeSuccess(conn, remoteConn)
 	if err != nil {
 		err = E.Cause(err, "report handshake success")
-		remoteConn.Close()
+		_ = remoteConn.Close()
 		_ = N.CloseOnHandshakeFailure(conn, onClose, err)
 		t.logger.ErrorContext(ctx, err)
 		return
@@ -141,7 +141,7 @@ func (t *Tun2Dialer) connectionCopy(ctx context.Context, source io.Reader, desti
 				cachedBuffer.Release()
 				if err != nil {
 					if done.Swap(true) {
-						onClose(err)
+						tryOnClose(onClose, err)
 					}
 					common.Close(originSource, originDestination)
 					if !direction {
@@ -174,7 +174,7 @@ func (t *Tun2Dialer) connectionCopy(ctx context.Context, source io.Reader, desti
 		common.Close(originDestination)
 	}
 	if done.Swap(true) {
-		onClose(err)
+		tryOnClose(onClose, err)
 		common.Close(originSource, originDestination)
 	}
 	if !direction {
@@ -220,8 +220,8 @@ func (t *Tun2Dialer) routePacketConn(ctx context.Context, conn N.PacketConn, sou
 	}
 	err = N.ReportPacketConnHandshakeSuccess(conn, remotePacketConn)
 	if err != nil {
-		conn.Close()
-		remotePacketConn.Close()
+		_ = conn.Close()
+		_ = remotePacketConn.Close()
 		t.logger.ErrorContext(ctx, "report handshake success: ", err)
 		return
 	}
@@ -251,7 +251,14 @@ func (t *Tun2Dialer) packetConnectionCopy(ctx context.Context, source N.PacketRe
 		}
 	}
 	if !done.Swap(true) {
-		onClose(err)
+		tryOnClose(onClose, err)
 	}
 	_ = common.Close(source, destination)
+}
+
+func tryOnClose(onClose N.CloseHandlerFunc, it error) {
+	if onClose == nil {
+		return
+	}
+	onClose(it)
 }
