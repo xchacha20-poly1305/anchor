@@ -49,6 +49,10 @@ func main() {
 		_, _ = os.Stdout.WriteString(F.ToString("Anchor: ", VERSION))
 		os.Exit(0)
 	}
+	err := checkPermission()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	level, err := zapcore.ParseLevel(*logLevel)
 	if err != nil {

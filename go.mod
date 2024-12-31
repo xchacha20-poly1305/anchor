@@ -6,6 +6,8 @@ require (
 	github.com/sagernet/sing v0.6.0-beta.2
 	github.com/sagernet/sing-tun v0.6.0-beta.6
 	go.uber.org/zap v1.27.0
+	golang.org/x/sys v0.28.0
+	kernel.org/pub/linux/libs/security/libcap/cap v1.2.73
 )
 
 // replace github.com/sagernet/sing-tun => ../sing-tun
@@ -28,6 +30,6 @@ require (
 	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8 // indirect
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
+	kernel.org/pub/linux/libs/security/libcap/psx v1.2.73 // indirect
 )
