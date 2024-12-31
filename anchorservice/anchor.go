@@ -15,7 +15,11 @@ import (
 	"github.com/xchacha20-poly1305/anchor"
 )
 
+// RejectFunc decides whether to reject the client query.
 type RejectFunc func(source net.Addr, deviceName string) (shouldReject bool)
+
+// ListenPacket returns a net.PacketConn.
+type ListenPacket func(ctx context.Context) (net.PacketConn, error)
 
 // Anchor implements a service that provides anchor protocol.
 type Anchor struct {
@@ -24,15 +28,27 @@ type Anchor struct {
 	packetConn   net.PacketConn
 	response     []byte
 	shouldReject RejectFunc
-	listen       *net.UDPAddr
+	listen       ListenPacket
 	startOnce    sync.Once
 }
 
-func New(ctx context.Context, logger logger.ContextLogger, listen *net.UDPAddr, response *anchor.Response, shouldReject RejectFunc) *Anchor {
-	listen.Port = anchor.Port
+// New returns a new Anchor service instance.
+// contextLogger, listen and shouldReject are optional.
+func New(ctx context.Context, contextLogger logger.ContextLogger, listen ListenPacket, response *anchor.Response, shouldReject RejectFunc) *Anchor {
+	if contextLogger == nil {
+		contextLogger = logger.NOP()
+	}
+	if listen == nil {
+		listen = func(ctx context.Context) (net.PacketConn, error) {
+			return net.ListenUDP(N.NetworkUDP, &net.UDPAddr{
+				IP:   net.IPv4zero,
+				Port: anchor.Port,
+			})
+		}
+	}
 	return &Anchor{
 		ctx:          ctx,
-		logger:       logger,
+		logger:       contextLogger,
 		response:     common.Must1(response.MarshalBinary()),
 		shouldReject: shouldReject,
 		listen:       listen,
@@ -43,19 +59,16 @@ func (a *Anchor) Start() (err error) {
 	notFirstStart := true
 	a.startOnce.Do(func() {
 		notFirstStart = false
-		a.packetConn, err = net.ListenUDP(N.NetworkUDP, a.listen)
+		a.packetConn, err = a.listen(a.ctx)
 		if err != nil {
 			return
 		}
 		go a.loop()
 	})
-	if err != nil {
-		return err
-	}
 	if notFirstStart {
 		return os.ErrExist
 	}
-	return nil
+	return
 }
 
 func (a *Anchor) loop() {

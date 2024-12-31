@@ -2,6 +2,8 @@ package anchorservice
 
 import (
 	"context"
+	"math"
+	"math/rand/v2"
 	"net"
 	"reflect"
 	"testing"
@@ -9,7 +11,6 @@ import (
 
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/buf"
-	"github.com/sagernet/sing/common/logger"
 	N "github.com/sagernet/sing/common/network"
 
 	"github.com/xchacha20-poly1305/anchor"
@@ -24,12 +25,20 @@ func Test_Service(t *testing.T) {
 	}
 	listenAddr := &net.UDPAddr{
 		IP:   net.IP{127, 0, 0, 0},
-		Port: anchor.Port,
+		Port: rand.IntN(math.MaxUint16),
 	}
 	const RejectDevice = "rejectable"
-	service := New(context.Background(), logger.NOP(), listenAddr, response, func(_ net.Addr, deviceName string) bool {
-		return deviceName == RejectDevice
-	})
+	service := New(
+		context.Background(),
+		nil,
+		func(ctx context.Context) (net.PacketConn, error) {
+			return net.ListenUDP(N.NetworkUDP, listenAddr)
+		},
+		response,
+		func(_ net.Addr, deviceName string) bool {
+			return deviceName == RejectDevice
+		},
+	)
 
 	err := service.Start()
 	if err != nil {
