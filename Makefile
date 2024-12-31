@@ -16,3 +16,6 @@ fmt:
 fmt_install:
 	go install -v mvdan.cc/gofumpt@latest
 	go install -v github.com/daixiang0/gci@latest
+
+test:
+	go test -v -count=1 ./...
