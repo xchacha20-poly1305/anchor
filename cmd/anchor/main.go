@@ -21,7 +21,7 @@ import (
 	"github.com/sagernet/sing/protocol/socks"
 
 	"github.com/xchacha20-poly1305/anchor"
-	"github.com/xchacha20-poly1305/anchor/dial"
+	"github.com/xchacha20-poly1305/anchor/dialers"
 	"github.com/xchacha20-poly1305/anchor/log"
 	"github.com/xchacha20-poly1305/anchor/tun2dialer"
 	"go.uber.org/zap/zapcore"
@@ -201,7 +201,8 @@ func main() {
 	if err != nil {
 		logger.Fatal("Start interface monitor: ", err)
 	}
-	dialer := dial.New(interfaceFinder, interfaceMonitor, config.BindInterface)
+	dialer := dialers.New()
+	dialer.Bind(interfaceFinder, interfaceMonitor, config.BindInterface)
 	serverAddr := M.SocksaddrFromNet(selected.addr)
 	serverAddr.Port = selected.response.SocksPort
 	socksDialer := socks.NewClient(

@@ -1,8 +1,8 @@
-// Package dial provides implementations for N.Dialer.
-package dial
+// Package dialers provides implementations for N.Dialer.
+package dialers
 
 import (
-	tun "github.com/sagernet/sing-tun"
+	"github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common/control"
 	N "github.com/sagernet/sing/common/network"
 )
@@ -13,8 +13,14 @@ type Dialer struct {
 	N.DefaultDialer
 }
 
-func New(finder control.InterfaceFinder, monitor tun.DefaultInterfaceMonitor, bindInterface string) (dialer *Dialer) {
-	dialer = &Dialer{}
+func New() *Dialer {
+	return &Dialer{DefaultDialer: N.DefaultDialer{}}
+}
+
+// Bind binds dialer to default interface if bindInterface name is empty
+// or binds dialer to the interfaceName you set.
+// finder is optional.
+func (d *Dialer) Bind(finder control.InterfaceFinder, monitor tun.DefaultInterfaceMonitor, bindInterface string) (dialer *Dialer) {
 	if finder == nil {
 		finder = control.NewDefaultInterfaceFinder()
 	}
@@ -33,7 +39,7 @@ func New(finder control.InterfaceFinder, monitor tun.DefaultInterfaceMonitor, bi
 	} else {
 		bindFunc = control.BindToInterface(finder, bindInterface, -1)
 	}
-	dialer.Dialer.Control = control.Append(dialer.Dialer.Control, bindFunc)
-	dialer.ListenConfig.Control = control.Append(dialer.ListenConfig.Control, bindFunc)
+	dialer.Dialer.Control = control.Append(d.Dialer.Control, bindFunc)
+	dialer.ListenConfig.Control = control.Append(d.ListenConfig.Control, bindFunc)
 	return dialer
 }
