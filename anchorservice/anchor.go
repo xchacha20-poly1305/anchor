@@ -59,10 +59,12 @@ func (a *Anchor) Start() (err error) {
 	notFirstStart := true
 	a.startOnce.Do(func() {
 		notFirstStart = false
-		a.packetConn, err = a.listen(a.ctx)
+		var packetConn net.PacketConn
+		packetConn, err = a.listen(a.ctx)
 		if err != nil {
 			return
 		}
+		a.packetConn = packetConn
 		go a.loop()
 	})
 	if notFirstStart {
@@ -112,6 +114,9 @@ func (a *Anchor) handle(source net.Addr, buffer *buf.Buffer) {
 }
 
 func (a *Anchor) Close() error {
+	if a == nil || a.packetConn == nil {
+		return os.ErrInvalid
+	}
 	a.logger.DebugContext(a.ctx, "closing Anchor server")
 	return a.packetConn.Close()
 }
