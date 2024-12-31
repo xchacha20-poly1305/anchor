@@ -137,10 +137,12 @@ func main() {
 	var selected *ScanResult
 	if deviceSize == 0 {
 		logger.Fatal("no devices found")
+		return
 	} else if deviceSize > 1 {
 		if *selectedIndex != -1 {
 			if deviceSize < *selectedIndex {
 				logger.Fatal("Invalid device selected: ", *selectedIndex)
+				return
 			}
 			selected = devices[*selectedIndex-1]
 		} else {
@@ -165,7 +167,6 @@ func main() {
 	}
 
 	if *remoteIp == "" {
-		//goland:noinspection GoDfaNilDereference
 		logger.Info("Selected ", selected.response.DeviceName, " (", selected.addr.IP, ")")
 	}
 
@@ -177,7 +178,6 @@ func main() {
 		selected.response.DnsPort = uint16(*dnsPort)
 	}
 
-	//goland:noinspection GoDfaNilDereference
 	logger.Info("SOCKS port: ", selected.response.SocksPort)
 	logger.Info("DNS port: ", selected.response.DnsPort)
 
@@ -214,7 +214,12 @@ func main() {
 	)
 
 	routedDialer := dialers.NewRouted(socksDialer)
-	routedDialer.AppendRule(route.UdpDnsPort(socksDialer))
+	routedDialer.AppendRule(route.UdpDnsPort(dialers.NewOverridden(socksDialer, func(destination M.Socksaddr) M.Socksaddr {
+		oldFqdn := destination.Fqdn
+		destination = M.SocksaddrFromNetIP(selected.addr.AddrPort())
+		destination.Fqdn = oldFqdn
+		return destination
+	})))
 	routedDialer.AppendRule(route.Lan(directDialer))
 
 	tunOption, err := config.ForTun2Dialer(logger, interfaceMonitor)
