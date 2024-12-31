@@ -24,12 +24,12 @@
     "FileDescription": "Connect to proxy in the LAN",
     "FileVersion": "0",
     "InternalName": "",
-    "LegalCopyright": "SagerNet contributors",
+    "LegalCopyright": "Anchor contributors",
     "LegalTrademarks": "",
     "OriginalFilename": "anchor.exe",
     "PrivateBuild": "",
     "ProductName": "anchor",
-    "ProductVersion": "v0.4.1",
+    "ProductVersion": "v0.4.2",
     "SpecialBuild": ""
   },
   "VarFileInfo": {

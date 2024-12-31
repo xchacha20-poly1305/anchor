@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"net/netip"
 	"os"
 	"os/signal"
 	"strconv"
@@ -30,7 +31,7 @@ import (
 
 //go:generate goversioninfo --platform-specific
 
-const VERSION = "v0.4.1"
+const VERSION = "v0.4.2"
 
 func main() {
 	fs := flag.NewFlagSet("anchor", flag.ExitOnError)
@@ -173,11 +174,9 @@ func main() {
 	if *remoteIp == "" {
 		logger.Info("Selected ", selected.response.DeviceName, " (", selected.addr.IP, ")")
 	}
-
 	if *socksPort != 2080 {
 		selected.response.SocksPort = uint16(*socksPort)
 	}
-
 	if *socksPort != 6450 {
 		selected.response.DnsPort = uint16(*dnsPort)
 	}
@@ -218,12 +217,15 @@ func main() {
 	)
 
 	routedDialer := dialers.NewRouted(socksDialer)
-	routedDialer.AppendRule(route.UdpDnsPort(dialers.NewOverridden(socksDialer, func(destination M.Socksaddr) M.Socksaddr {
-		oldFqdn := destination.Fqdn
-		destination = M.SocksaddrFromNetIP(selected.addr.AddrPort())
-		destination.Fqdn = oldFqdn
-		return destination
-	})))
+	if selected.response.DnsPort > 0 {
+		routedDialer.AppendRule(route.UdpDnsPort(dialers.NewOverridden(socksDialer, func(destination M.Socksaddr) M.Socksaddr {
+			return M.Socksaddr{
+				Addr: netip.AddrFrom4([4]byte(selected.addr.IP)),
+				Port: selected.response.DnsPort,
+				Fqdn: destination.Fqdn,
+			}
+		})))
+	}
 	routedDialer.AppendRule(route.Lan(directDialer))
 
 	tunOption, err := config.ForTun2Dialer(logger, interfaceMonitor)

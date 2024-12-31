@@ -47,6 +47,7 @@ make fmt
 | 1       | 2        | 1                  | 0 to 128    | 2          |
 
 - **Version**: always constant `0x02`
+- **Dns Port**: can be zero, which means server not providing dns port.
 
 # Credits
 
