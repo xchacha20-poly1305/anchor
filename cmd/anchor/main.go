@@ -30,7 +30,7 @@ import (
 
 //go:generate goversioninfo --platform-specific
 
-const VERSION = "v0.3.1"
+const VERSION = "v0.4.0"
 
 func main() {
 	fs := flag.NewFlagSet("anchor", flag.ExitOnError)
