@@ -6,7 +6,7 @@ MAIN = ./cmd/$(NAME)
 .PHONY: build
 
 build:
-	go build $(PARAMS) $(MAIN)
+	CGO_ENABLED=0 go build $(PARAMS) $(MAIN)
 
 fmt:
 	@gofumpt -l -w .

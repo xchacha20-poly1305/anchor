@@ -7,20 +7,15 @@ import (
 	N "github.com/sagernet/sing/common/network"
 )
 
-var _ N.Dialer = (*Dialer)(nil)
+var _ N.Dialer = (*bound)(nil)
 
-type Dialer struct {
+type bound struct {
 	N.DefaultDialer
 }
 
-func New() *Dialer {
-	return &Dialer{DefaultDialer: N.DefaultDialer{}}
-}
-
-// Bind binds dialer to default interface if bindInterface name is empty
-// or binds dialer to the interfaceName you set.
-// finder is optional.
-func (d *Dialer) Bind(finder control.InterfaceFinder, monitor tun.DefaultInterfaceMonitor, bindInterface string) (dialer *Dialer) {
+// NewBound returns a dialer bound to interface, whose name is bindInterface.
+// If bindInterface is empty, this will bind to default interface.
+func NewBound(finder control.InterfaceFinder, monitor tun.DefaultInterfaceMonitor, bindInterface string) N.Dialer {
 	if finder == nil {
 		finder = control.NewDefaultInterfaceFinder()
 	}
@@ -39,7 +34,8 @@ func (d *Dialer) Bind(finder control.InterfaceFinder, monitor tun.DefaultInterfa
 	} else {
 		bindFunc = control.BindToInterface(finder, bindInterface, -1)
 	}
-	dialer.Dialer.Control = control.Append(d.Dialer.Control, bindFunc)
-	dialer.ListenConfig.Control = control.Append(d.ListenConfig.Control, bindFunc)
+	dialer := &bound{}
+	dialer.Dialer.Control = control.Append(dialer.Dialer.Control, bindFunc)
+	dialer.ListenConfig.Control = control.Append(dialer.ListenConfig.Control, bindFunc)
 	return dialer
 }

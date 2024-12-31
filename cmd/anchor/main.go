@@ -23,6 +23,7 @@ import (
 	"github.com/xchacha20-poly1305/anchor"
 	"github.com/xchacha20-poly1305/anchor/dialers"
 	"github.com/xchacha20-poly1305/anchor/log"
+	"github.com/xchacha20-poly1305/anchor/route"
 	"github.com/xchacha20-poly1305/anchor/tun2dialer"
 	"go.uber.org/zap/zapcore"
 )
@@ -201,24 +202,27 @@ func main() {
 	if err != nil {
 		logger.Fatal("Start interface monitor: ", err)
 	}
-	dialer := dialers.New()
-	dialer.Bind(interfaceFinder, interfaceMonitor, config.BindInterface)
+	directDialer := dialers.NewBound(interfaceFinder, interfaceMonitor, config.BindInterface)
 	serverAddr := M.SocksaddrFromNet(selected.addr)
 	serverAddr.Port = selected.response.SocksPort
 	socksDialer := socks.NewClient(
-		dialer,
+		directDialer,
 		serverAddr,
 		socks.Version5,
 		"",
 		"",
 	)
 
+	routedDialer := dialers.NewRouted(socksDialer)
+	routedDialer.AppendRule(route.UdpDnsPort(socksDialer))
+	routedDialer.AppendRule(route.Lan(directDialer))
+
 	tunOption, err := config.ForTun2Dialer(logger, interfaceMonitor)
 	if err != nil {
 		logger.Fatal("Build Tun config: ", err)
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
-	instance, err := tun2dialer.NewTun2Dialer(ctx, logger, tunOption, interfaceFinder, socksDialer, dialer)
+	instance, err := tun2dialer.NewTun2Dialer(ctx, logger, tunOption, interfaceFinder, routedDialer)
 	if err != nil {
 		logger.Fatal("Create tun2dialer instance: ", err)
 	}

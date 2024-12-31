@@ -17,18 +17,20 @@ import (
 	"github.com/sagernet/sing/common/logger"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
+
+	"github.com/xchacha20-poly1305/anchor/route"
 )
 
 var _ tun.Handler = (*Tun2Dialer)(nil)
 
 // Tun2Dialer forwards tun connections to dialer.
 type Tun2Dialer struct {
-	logger               logger.ContextLogger
-	dialer, directDialer N.Dialer
-	bypassLan            bool
-	tunInterface         tun.Tun
-	stack                tun.Stack
-	udpTimeout           time.Duration
+	logger       logger.ContextLogger
+	dialer       N.Dialer
+	bypassLan    bool
+	tunInterface tun.Tun
+	stack        tun.Stack
+	udpTimeout   time.Duration
 }
 
 // NewTun2Dialer returns Tun2Dialer which forward to dialer.
@@ -36,7 +38,7 @@ func NewTun2Dialer(ctx context.Context,
 	ctxLogger logger.ContextLogger,
 	tunOptions Options,
 	interfaceFinder control.InterfaceFinder,
-	dialer, bypassedDialer N.Dialer,
+	dialer N.Dialer,
 ) (*Tun2Dialer, error) {
 	var err error
 	if dialer == nil {
@@ -46,11 +48,10 @@ func NewTun2Dialer(ctx context.Context,
 		ctxLogger = logger.NOP()
 	}
 	t := &Tun2Dialer{
-		logger:       ctxLogger,
-		dialer:       dialer,
-		directDialer: bypassedDialer,
-		bypassLan:    tunOptions.BypassLAN,
-		udpTimeout:   tunOptions.UDPTimeout,
+		logger:     ctxLogger,
+		dialer:     dialer,
+		bypassLan:  tunOptions.BypassLAN,
+		udpTimeout: tunOptions.UDPTimeout,
 	}
 	t.tunInterface, err = tun.New(tunOptions.Options)
 	if err != nil {
@@ -92,20 +93,17 @@ func (t *Tun2Dialer) PrepareConnection(network string, source, destination M.Soc
 func (t *Tun2Dialer) NewConnectionEx(ctx context.Context, conn net.Conn, source, destination M.Socksaddr, onClose N.CloseHandlerFunc) {
 	t.logger.InfoContext(ctx, "inbound connection from ", source)
 	t.logger.InfoContext(ctx, "inbound connection to ", destination)
+	ctx = route.AppendInboundContext(ctx, &route.InboundContext{
+		Network:     N.NetworkTCP,
+		Source:      source,
+		Destination: destination,
+	})
 
 	t.routeConnection(ctx, conn, source, destination, onClose)
 }
 
 func (t *Tun2Dialer) routeConnection(ctx context.Context, conn net.Conn, source, destination M.Socksaddr, onClose N.CloseHandlerFunc) {
-	var (
-		remoteConn net.Conn
-		err        error
-	)
-	if t.bypassLan && !N.IsPublicAddr(source.Addr) {
-		remoteConn, err = t.directDialer.DialContext(ctx, N.NetworkTCP, destination)
-	} else {
-		remoteConn, err = t.dialer.DialContext(ctx, N.NetworkTCP, destination)
-	}
+	remoteConn, err := t.dialer.DialContext(ctx, N.NetworkTCP, destination)
 	if err != nil {
 		err = E.Cause(err, "open outbound connection")
 		_ = N.CloseOnHandshakeFailure(conn, onClose, err)
@@ -199,20 +197,17 @@ func (t *Tun2Dialer) connectionCopy(ctx context.Context, source io.Reader, desti
 func (t *Tun2Dialer) NewPacketConnectionEx(ctx context.Context, conn N.PacketConn, source, destination M.Socksaddr, onClose N.CloseHandlerFunc) {
 	t.logger.InfoContext(ctx, "inbound redirect connection from ", source)
 	t.logger.InfoContext(ctx, "inbound connection to ", destination)
+	ctx = route.AppendInboundContext(ctx, &route.InboundContext{
+		Network:     N.NetworkUDP,
+		Source:      source,
+		Destination: destination,
+	})
 
 	t.routePacketConn(ctx, conn, source, destination, onClose)
 }
 
 func (t *Tun2Dialer) routePacketConn(ctx context.Context, conn N.PacketConn, source, destination M.Socksaddr, onClose N.CloseHandlerFunc) {
-	var (
-		remotePacketConn net.PacketConn
-		err              error
-	)
-	if t.bypassLan && destination.Port != DNSPort && !N.IsPublicAddr(source.Addr) {
-		remotePacketConn, err = t.directDialer.ListenPacket(ctx, destination)
-	} else {
-		remotePacketConn, err = t.dialer.ListenPacket(ctx, destination)
-	}
+	remotePacketConn, err := t.dialer.ListenPacket(ctx, destination)
 	if err != nil {
 		_ = N.CloseOnHandshakeFailure(conn, onClose, err)
 		t.logger.ErrorContext(ctx, "listen outbound packet connection: ", err)
