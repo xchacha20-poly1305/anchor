@@ -51,7 +51,7 @@ func main() {
 	}
 	err := checkPermission()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(E.Cause(err, "check permission"), " Please try run with root permission.")
 	}
 
 	level, err := zapcore.ParseLevel(*logLevel)
