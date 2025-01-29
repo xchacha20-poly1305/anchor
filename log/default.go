@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var DefaultLog = New(os.Stderr, zapcore.InfoLevel)
+var DefaultLog = New(context.Background(), os.Stderr, zapcore.InfoLevel, DisableColorFromEnv)
 
 func Fatal(args ...any) {
 	DefaultLog.Fatal(args...)

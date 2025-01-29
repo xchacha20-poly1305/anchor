@@ -18,19 +18,26 @@ type Logger struct {
 	*zap.Logger
 }
 
-func New(writer io.Writer, level zapcore.Level) *Logger {
+func New(ctx context.Context, writer io.Writer, level zapcore.Level, disableColor bool) *Logger {
 	writeSyncer := zapcore.AddSync(writer)
 
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.TimeKey = "timestamp"
-	encoderConfig.EncodeLevel = colorfulLevelEncoder
-	encoderConfig.EncodeTime = colorfulTimeEncoder
+	if disableColor {
+		encoderConfig.EncodeLevel = defaultLevelEncoder
+		encoderConfig.EncodeTime = defaultTimeEncoder
+	} else {
+		encoderConfig.EncodeLevel = colorfulLevelEncoder
+		encoderConfig.EncodeTime = colorfulTimeEncoder
+	}
 
 	encoder := zapcore.NewConsoleEncoder(encoderConfig)
 	core := zapcore.NewCore(encoder, writeSyncer, level)
 	zapLogger := zap.New(core)
 
-	return &Logger{zapLogger}
+	return &Logger{
+		Logger: zapLogger,
+	}
 }
 
 func (l *Logger) Trace(args ...any) {

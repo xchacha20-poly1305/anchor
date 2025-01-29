@@ -64,7 +64,7 @@ func main() {
 		log.Fatal(E.Cause(err, "parse log output"))
 	}
 	defer common.Close(output)
-	logger := log.New(output, level)
+	logger := log.New(context.Background(), output, level, log.DisableColorFromEnv)
 	defer logger.Sync()
 
 	config := &Options{}

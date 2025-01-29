@@ -1,10 +1,16 @@
 package log
 
 import (
+	"os"
 	"time"
 
 	"go.uber.org/zap/zapcore"
 )
+
+// DisableColorFromEnv checks environment to decides whether we should use color.
+//
+// https://no-color.org/
+var DisableColorFromEnv = os.Getenv("NO_COLOR") != ""
 
 // ANSI color codes as constants
 const (
@@ -39,4 +45,12 @@ func colorfulLevelEncoder(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder
 
 func colorfulTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(ColorYellow + t.Format(time.RFC3339) + ColorReset)
+}
+
+func defaultLevelEncoder(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(level.CapitalString())
+}
+
+func defaultTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(t.Format(time.RFC3339))
 }
