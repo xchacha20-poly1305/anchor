@@ -50,10 +50,6 @@ func main() {
 		_, _ = os.Stdout.WriteString(F.ToString("Anchor: ", VERSION))
 		os.Exit(0)
 	}
-	err := checkPermission()
-	if err != nil {
-		log.Fatal(E.Cause(err, "check permission"), " Please try run with root permission.")
-	}
 
 	level, err := zapcore.ParseLevel(*logLevel)
 	if err != nil {
@@ -66,6 +62,11 @@ func main() {
 	defer common.Close(output)
 	logger := log.New(context.Background(), output, level, log.DisableColorFromEnv)
 	defer logger.Sync()
+
+	err = checkPermission()
+	if err != nil {
+		logger.Error(E.Cause(err, "check permission"), "; Please try run with root permission.")
+	}
 
 	config := &Options{}
 	for {
