@@ -1,6 +1,7 @@
 NAME = anchor
+VERSION = v0.4.4
 TAGS = "with_gvisor"
-PARAMS = -v -trimpath -ldflags "-s -w -buildid=" -tags $(TAGS)
+PARAMS = -v -trimpath -ldflags "-s -w -buildid= -X main.version=$(VERSION)" -tags $(TAGS)
 MAIN = ./cmd/$(NAME)
 
 .PHONY: build

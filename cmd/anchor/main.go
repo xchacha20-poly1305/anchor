@@ -31,7 +31,7 @@ import (
 
 //go:generate goversioninfo --platform-specific
 
-const VERSION = "v0.4.2"
+var version = "unknown"
 
 func main() {
 	fs := flag.NewFlagSet("anchor", flag.ExitOnError)
@@ -47,7 +47,7 @@ func main() {
 	_ = fs.Parse(os.Args[1:])
 
 	if *showVersion || isShowVersion(fs.Arg(0)) {
-		_, _ = os.Stdout.WriteString(F.ToString("Anchor: ", VERSION))
+		_, _ = os.Stdout.WriteString(F.ToString("Anchor: ", version))
 		os.Exit(0)
 	}
 
