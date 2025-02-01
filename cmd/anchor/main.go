@@ -14,6 +14,7 @@ import (
 
 	"github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common"
+	"github.com/sagernet/sing/common/auth"
 	"github.com/sagernet/sing/common/control"
 	E "github.com/sagernet/sing/common/exceptions"
 	F "github.com/sagernet/sing/common/format"
@@ -25,6 +26,7 @@ import (
 	"github.com/xchacha20-poly1305/anchor/dialers"
 	"github.com/xchacha20-poly1305/anchor/log"
 	"github.com/xchacha20-poly1305/anchor/route"
+	"github.com/xchacha20-poly1305/anchor/sockshttp"
 	"github.com/xchacha20-poly1305/anchor/tun2dialer"
 	"go.uber.org/zap/zapcore"
 )
@@ -238,11 +240,26 @@ func main() {
 	if err != nil {
 		logger.Fatal("Create tun2dialer instance: ", err)
 	}
+	var mixed *sockshttp.SocksHttp
+	if mixedInbound := config.MixedInbound; mixedInbound.Listen != "" {
+		mixed, err = sockshttp.New(ctx, logger, instance, mixedInbound.Listen, auth.NewAuthenticator(mixedInbound.Users))
+		if err != nil {
+			logger.Fatal("Create mixed inbound: ", err)
+		}
+	}
+
 	err = instance.Start()
 	if err != nil {
-		logger.Fatal("try start tun2dialer: ", err)
+		logger.Fatal("Start tun2dialer: ", err)
 	}
-	logger.Warn("Started")
+	logger.Warn("Started tun")
+	if mixed != nil {
+		err = mixed.Start()
+		if err != nil {
+			logger.Fatal("Start mixed inbound: ", err)
+		}
+		logger.Warn("Started mixed inbound")
+	}
 
 	<-ctx.Done()
 	cancel()

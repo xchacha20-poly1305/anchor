@@ -10,5 +10,14 @@
   "bypass_lan": true,
   "dns": [
     "8.8.8.8"
-  ]
+  ],
+  "mixed_inbound": {
+    "listen": "127.0.0.1:7890",
+    "users": [
+      {
+        "username": "sekai",
+        "password": "box"
+      }
+    ]
+  }
 }

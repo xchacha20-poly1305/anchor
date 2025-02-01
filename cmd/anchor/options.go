@@ -4,6 +4,7 @@ import (
 	"net/netip"
 
 	tun "github.com/sagernet/sing-tun"
+	"github.com/sagernet/sing/common/auth"
 	"github.com/sagernet/sing/common/json/badoption"
 	"github.com/sagernet/sing/common/logger"
 
@@ -30,6 +31,8 @@ type Options struct {
 	ExcludeInterface         badoption.Listable[string]       `json:"exclude_interface,omitempty"`
 	BypassLAN                bool                             `json:"bypass_lan,omitempty"`
 	DNS                      badoption.Listable[string]       `json:"dns,omitempty"`
+
+	MixedInbound MixedInboundOptions `json:"mixed_inbound,omitempty"`
 }
 
 func (o *Options) ForTun2Dialer(ctxLogger logger.ContextLogger, interfaceMonitor tun.DefaultInterfaceMonitor) (tun2dialer.Options, error) {
@@ -95,4 +98,9 @@ func (o *Options) ApplyDefault() {
 	if len(o.DNS) == 0 {
 		o.DNS = []string{tun2dialer.DNSServer}
 	}
+}
+
+type MixedInboundOptions struct {
+	Listen string                        `json:"listen,omitempty"`
+	Users  badoption.Listable[auth.User] `json:"users,omitempty"`
 }

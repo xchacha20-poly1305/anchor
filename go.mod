@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/sagernet/sing v0.6.0-beta.12
-	github.com/sagernet/sing-tun v0.6.0-beta.7
+	github.com/sagernet/sing-tun v0.6.0-beta.8
 	go.uber.org/zap v1.27.0
 	golang.org/x/sys v0.29.0
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.73
