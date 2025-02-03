@@ -263,7 +263,12 @@ func main() {
 
 	<-ctx.Done()
 	cancel()
-	err = common.Close(instance, interfaceMonitor, networkMonitor)
+	err = common.Close(
+		common.PtrOrNil(mixed),
+		instance,
+		interfaceMonitor,
+		networkMonitor,
+	)
 	if err != nil {
 		log.Fatal("Close got error: ", err)
 	}

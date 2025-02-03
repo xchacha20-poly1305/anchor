@@ -86,6 +86,13 @@ func (t *Tun2Dialer) Start() error {
 	return nil
 }
 
+func (t *Tun2Dialer) Close() error {
+	return common.Close(
+		t.tunInterface,
+		t.stack,
+	)
+}
+
 func (t *Tun2Dialer) PrepareConnection(network string, source, destination M.Socksaddr) error {
 	return nil
 }
