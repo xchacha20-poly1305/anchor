@@ -120,3 +120,7 @@ func (a *Anchor) Close() error {
 	a.logger.DebugContext(a.ctx, "closing Anchor server")
 	return a.packetConn.Close()
 }
+
+func (a *Anchor) Upstream() any {
+	return a.packetConn
+}

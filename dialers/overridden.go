@@ -42,6 +42,10 @@ func (o *Overridden) ListenPacket(ctx context.Context, destination M.Socksaddr) 
 	return o.dialer.ListenPacket(ctx, destination)
 }
 
+func (o *Overridden) Upstream() any {
+	return o.dialer
+}
+
 func tryUpdateInboundContext(ctx context.Context, destination M.Socksaddr) {
 	inboundContext := route.InboundContextFrom(ctx)
 	if inboundContext == nil {

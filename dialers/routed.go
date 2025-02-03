@@ -43,6 +43,10 @@ func (r *Routed) AppendRule(routeFunc route.Func) {
 	r.routes = append(r.routes, routeFunc)
 }
 
+func (r *Routed) Upstream() any {
+	return r.dialer
+}
+
 func (r *Routed) matchDialer(ctx context.Context) N.Dialer {
 	inboundContext := route.InboundContextFrom(ctx)
 	if inboundContext == nil {

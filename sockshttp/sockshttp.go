@@ -92,3 +92,7 @@ func (s *SocksHttp) handle(conn net.Conn) {
 func (s *SocksHttp) Close() error {
 	return common.Close(s.listener)
 }
+
+func (s *SocksHttp) Upstream() any {
+	return s.listener
+}

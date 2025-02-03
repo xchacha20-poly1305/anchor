@@ -40,6 +40,10 @@ func New(ctx context.Context, writer io.Writer, level zapcore.Level, disableColo
 	}
 }
 
+func (l *Logger) Upstream() any {
+	return l.Logger
+}
+
 func (l *Logger) Trace(args ...any) {
 	l.TraceContext(context.Background(), args...)
 }

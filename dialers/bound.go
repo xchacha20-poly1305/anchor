@@ -39,3 +39,7 @@ func NewBound(finder control.InterfaceFinder, monitor tun.DefaultInterfaceMonito
 	dialer.ListenConfig.Control = control.Append(dialer.ListenConfig.Control, bindFunc)
 	return dialer
 }
+
+func (r *bound) Upstream() any {
+	return r.DefaultDialer
+}
