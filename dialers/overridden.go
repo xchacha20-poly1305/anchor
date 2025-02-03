@@ -51,5 +51,5 @@ func tryUpdateInboundContext(ctx context.Context, destination M.Socksaddr) {
 	if inboundContext == nil {
 		return
 	}
-	inboundContext.Destination = destination
+	inboundContext.Override = destination
 }

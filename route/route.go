@@ -12,6 +12,7 @@ type routeInboundContext struct{}
 type InboundContext struct {
 	Network             string
 	Source, Destination M.Socksaddr
+	Override            M.Socksaddr
 }
 
 func AppendInboundContext(ctx context.Context, inboundContext *InboundContext) context.Context {
