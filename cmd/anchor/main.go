@@ -8,6 +8,7 @@ import (
 	"net/netip"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"syscall"
@@ -264,6 +265,7 @@ func main() {
 		logger.Warn("Started mixed inbound")
 	}
 
+	debug.FreeOSMemory()
 	<-ctx.Done()
 	cancel()
 	err = common.Close(
