@@ -3,12 +3,12 @@
 package anchor
 
 import (
-	"bytes"
 	"encoding"
 	"encoding/binary"
 	"io"
 
 	"github.com/sagernet/sing/common"
+	"github.com/sagernet/sing/common/buf"
 	E "github.com/sagernet/sing/common/exceptions"
 )
 
@@ -64,16 +64,17 @@ func (q Query) Length() (length int) {
 	return
 }
 
+// MarshalBinary uses buffer from buf. Please put bytes to pool after use.
 func (q Query) MarshalBinary() ([]byte, error) {
-	buf := bytes.NewBuffer(make([]byte, 0, q.Length()))
-	common.Must(binary.Write(buf, binary.BigEndian, q.Version))
+	buffer := buf.NewSize(q.Length())
+	common.Must(binary.Write(buffer, binary.BigEndian, q.Version))
 	deviceName := []byte(q.DeviceName)
 	if len(deviceName) > MaxDeviceName {
 		deviceName = deviceName[:MaxDeviceName]
 	}
-	common.Must(binary.Write(buf, binary.BigEndian, uint8(len(deviceName))))
-	common.Must1(buf.Write(deviceName))
-	return buf.Bytes(), nil
+	common.Must(binary.Write(buffer, binary.BigEndian, uint8(len(deviceName))))
+	common.Must1(buffer.Write(deviceName))
+	return buffer.Bytes(), nil
 }
 
 var _ encoding.BinaryMarshaler = (*Response)(nil)
@@ -133,17 +134,18 @@ func (r Response) Length() (length int) {
 	return
 }
 
+// MarshalBinary uses buffer from buf. Please put bytes to pool after use.
 func (r Response) MarshalBinary() ([]byte, error) {
-	buf := bytes.NewBuffer(make([]byte, 0, r.Length()))
-	common.Must(binary.Write(buf, binary.BigEndian, r.Version))
-	common.Must(binary.Write(buf, binary.BigEndian, r.DnsPort))
+	buffer := buf.NewSize(r.Length())
+	common.Must(binary.Write(buffer, binary.BigEndian, r.Version))
+	common.Must(binary.Write(buffer, binary.BigEndian, r.DnsPort))
 	deviceName := []byte(r.DeviceName)
 	if len(deviceName) > MaxDeviceName {
 		deviceName = deviceName[:MaxDeviceName]
 	}
-	common.Must(binary.Write(buf, binary.BigEndian, uint8(len(deviceName))))
-	common.Must1(buf.Write(deviceName))
-	common.Must(binary.Write(buf, binary.BigEndian, r.SocksPort))
+	common.Must(binary.Write(buffer, binary.BigEndian, uint8(len(deviceName))))
+	common.Must1(buffer.Write(deviceName))
+	common.Must(binary.Write(buffer, binary.BigEndian, r.SocksPort))
 
-	return buf.Bytes(), nil
+	return buffer.Bytes(), nil
 }

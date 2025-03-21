@@ -118,6 +118,7 @@ func (a *Anchor) Close() error {
 		return os.ErrInvalid
 	}
 	a.logger.DebugContext(a.ctx, "closing Anchor server")
+	buf.Put(a.response)
 	return a.packetConn.Close()
 }
 

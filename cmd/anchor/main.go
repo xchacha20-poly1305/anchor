@@ -15,6 +15,7 @@ import (
 	"github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/auth"
+	"github.com/sagernet/sing/common/buf"
 	"github.com/sagernet/sing/common/control"
 	E "github.com/sagernet/sing/common/exceptions"
 	F "github.com/sagernet/sing/common/format"
@@ -105,6 +106,7 @@ func main() {
 
 		ifAddrs := listInterfaceAddr(logger)
 		if len(ifAddrs) == 0 {
+			buf.Put(query)
 			logger.Fatal("failed to get available network interfaces")
 		}
 
@@ -122,6 +124,7 @@ func main() {
 				break
 			}
 		}
+		buf.Put(query)
 	} else {
 		ip := net.ParseIP(*remoteIp)
 		if ip == nil {
