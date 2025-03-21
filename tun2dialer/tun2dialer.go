@@ -131,13 +131,15 @@ func (t *Tun2Dialer) routeConnection(ctx context.Context, conn net.Conn, source,
 	go t.connectionCopy(ctx, remoteConn, conn, true, &done, onClose)
 }
 
-func (t *Tun2Dialer) connectionCopy(ctx context.Context, source io.Reader, destination io.Writer, direction bool, done *atomic.Bool, onClose N.CloseHandlerFunc) {
-	originSource := source
-	originDestination := destination
+func (t *Tun2Dialer) connectionCopy(ctx context.Context, source, destination net.Conn, direction bool, done *atomic.Bool, onClose N.CloseHandlerFunc) {
+	var (
+		sourceReader      io.Reader = source
+		destinationWriter io.Writer = destination
+	)
 	var readCounters, writeCounters []N.CountFunc
 	for {
-		source, readCounters = N.UnwrapCountReader(source, readCounters)
-		destination, writeCounters = N.UnwrapCountWriter(destination, writeCounters)
+		sourceReader, readCounters = N.UnwrapCountReader(sourceReader, readCounters)
+		destinationWriter, writeCounters = N.UnwrapCountWriter(destinationWriter, writeCounters)
 		if cachedSrc, isCached := source.(N.CachedReader); isCached {
 			cachedBuffer := cachedSrc.ReadCached()
 			if cachedBuffer != nil {
@@ -148,7 +150,7 @@ func (t *Tun2Dialer) connectionCopy(ctx context.Context, source io.Reader, desti
 					if done.Swap(true) {
 						tryOnClose(onClose, err)
 					}
-					common.Close(originSource, originDestination)
+					common.Close(source, destination)
 					if !direction {
 						t.logger.ErrorContext(ctx, "connection upload payload: ", err)
 					} else {
@@ -167,20 +169,20 @@ func (t *Tun2Dialer) connectionCopy(ctx context.Context, source io.Reader, desti
 		}
 		break
 	}
-	_, err := bufio.CopyWithCounters(destination, source, originSource, readCounters, writeCounters)
+	_, err := bufio.CopyWithCounters(destination, sourceReader, source, readCounters, writeCounters)
 	if err != nil {
-		common.Close(originDestination)
+		common.Close(source, destination)
 	} else if duplexDst, isDuplex := destination.(N.WriteCloser); isDuplex {
 		err = duplexDst.CloseWrite()
 		if err != nil {
-			common.Close(originSource, originDestination)
+			common.Close(source, destination)
 		}
 	} else {
-		common.Close(originDestination)
+		_ = destination.Close()
 	}
 	if done.Swap(true) {
 		tryOnClose(onClose, err)
-		common.Close(originSource, originDestination)
+		common.Close(source, destination)
 	}
 	if !direction {
 		if err == nil {
