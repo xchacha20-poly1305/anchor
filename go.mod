@@ -3,11 +3,11 @@ module github.com/xchacha20-poly1305/anchor
 go 1.23.0
 
 require (
-	github.com/sagernet/sing v0.6.3
-	github.com/sagernet/sing-tun v0.6.1
+	github.com/sagernet/sing v0.6.11
+	github.com/sagernet/sing-tun v0.6.9
 	go.uber.org/zap v1.27.0
-	golang.org/x/sys v0.31.0
-	kernel.org/pub/linux/libs/security/libcap/cap v1.2.75
+	golang.org/x/sys v0.33.0
+	kernel.org/pub/linux/libs/security/libcap/cap v1.2.76
 )
 
 // replace github.com/sagernet/sing-tun => ../sing-tun
@@ -28,8 +28,8 @@ require (
 	go.uber.org/multierr v1.10.0 // indirect
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba // indirect
 	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8 // indirect
-	golang.org/x/net v0.34.0 // indirect
+	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
-	kernel.org/pub/linux/libs/security/libcap/psx v1.2.75 // indirect
+	kernel.org/pub/linux/libs/security/libcap/psx v1.2.76 // indirect
 )
