@@ -3,7 +3,7 @@ package tun2dialer
 import (
 	"time"
 
-	tun "github.com/sagernet/sing-tun"
+	"github.com/sagernet/sing-tun"
 )
 
 // Options is option for Tun2Dialer

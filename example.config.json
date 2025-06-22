@@ -11,6 +11,7 @@
   "dns": [
     "8.8.8.8"
   ],
+  "auto_redirect": true,
   "mixed_inbound": {
     "listen": "127.0.0.1:7890",
     "users": [

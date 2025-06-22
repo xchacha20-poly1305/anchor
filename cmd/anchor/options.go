@@ -3,7 +3,7 @@ package main
 import (
 	"net/netip"
 
-	tun "github.com/sagernet/sing-tun"
+	"github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common/auth"
 	"github.com/sagernet/sing/common/json/badoption"
 	"github.com/sagernet/sing/common/logger"
@@ -31,6 +31,7 @@ type Options struct {
 	ExcludeInterface         badoption.Listable[string]       `json:"exclude_interface,omitempty"`
 	BypassLAN                bool                             `json:"bypass_lan,omitempty"`
 	DNS                      badoption.Listable[string]       `json:"dns,omitempty"`
+	AutoRedirect             bool                             `json:"auto_redirect"`
 
 	MixedInbound MixedInboundOptions `json:"mixed_inbound,omitempty"`
 }
@@ -43,6 +44,14 @@ func (o *Options) ForTun2Dialer(ctxLogger logger.ContextLogger, interfaceMonitor
 			return tun2dialer.Options{}, err
 		}
 		dnsServers = append(dnsServers, addr)
+	}
+	var (
+		autoRedirectInputMark  uint32
+		autoRedirectOutputMark uint32
+	)
+	if o.AutoRedirect {
+		autoRedirectInputMark = tun.DefaultAutoRedirectInputMark
+		autoRedirectOutputMark = tun.DefaultAutoRedirectOutputMark
 	}
 	return tun2dialer.Options{
 		Options: tun.Options{
@@ -64,6 +73,8 @@ func (o *Options) ForTun2Dialer(ctxLogger logger.ContextLogger, interfaceMonitor
 			ExcludeUID:               nil,
 			InterfaceMonitor:         interfaceMonitor,
 			Logger:                   ctxLogger,
+			AutoRedirectInputMark:    autoRedirectInputMark,
+			AutoRedirectOutputMark:   autoRedirectOutputMark,
 		},
 		Stack:              o.Stack,
 		UDPTimeout:         o.UDPTimeout.Build(),
