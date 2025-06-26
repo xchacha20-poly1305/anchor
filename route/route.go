@@ -1,3 +1,4 @@
+// Package route implements simple connection router.
 package route
 
 import (
@@ -9,22 +10,35 @@ import (
 
 type routeInboundContext struct{}
 
+// InboundContext stores metadata of inbound connection.
 type InboundContext struct {
 	Network             string
 	Source, Destination M.Socksaddr
 	Override            M.Socksaddr
 }
 
+// AppendInboundContext appends inboundContext to ctx.
 func AppendInboundContext(ctx context.Context, inboundContext *InboundContext) context.Context {
 	return context.WithValue(ctx, routeInboundContext{}, inboundContext)
 }
 
+// InboundContextFrom tries getting the InboundContext in ctx.
 func InboundContextFrom(ctx context.Context) *InboundContext {
 	value := ctx.Value(routeInboundContext{})
 	if value == nil {
 		return nil
 	}
 	return value.(*InboundContext) // Must
+}
+
+// Clone returns a copy of InboundContext.
+func (i *InboundContext) Clone() *InboundContext {
+	return &InboundContext{
+		Network:     i.Network,
+		Source:      i.Source,
+		Destination: i.Destination,
+		Override:    i.Override,
+	}
 }
 
 // Func returns a dialer according to ctx.

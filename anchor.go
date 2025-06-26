@@ -1,5 +1,4 @@
-// Package anchor provides an API
-// that allow switching the proxy info.
+// Package anchor implements the serialization of anchor protocol.
 package anchor
 
 import (
@@ -25,11 +24,13 @@ const (
 
 var _ encoding.BinaryMarshaler = (*Query)(nil)
 
+// Query is an anchor query.
 type Query struct {
 	Version    uint8
 	DeviceName string
 }
 
+// ParseQuery parse anchor query from reader.
 func ParseQuery(reader io.Reader) (*Query, error) {
 	query := &Query{}
 	err := binary.Read(reader, binary.BigEndian, &query.Version)
@@ -57,6 +58,7 @@ func ParseQuery(reader io.Reader) (*Query, error) {
 	return query, nil
 }
 
+// Length calculate the binary length of anchor query.
 func (q Query) Length() (length int) {
 	length += 1 // Version
 	length += 1 // Device Name Length
@@ -79,6 +81,7 @@ func (q Query) MarshalBinary() ([]byte, error) {
 
 var _ encoding.BinaryMarshaler = (*Response)(nil)
 
+// Response is an anchor response.
 type Response struct {
 	Version    uint8
 	DnsPort    uint16
@@ -86,6 +89,7 @@ type Response struct {
 	SocksPort  uint16
 }
 
+// ParseResponse parses anchor response from reader.
 func ParseResponse(reader io.Reader) (*Response, error) {
 	response := &Response{}
 	err := binary.Read(reader, binary.BigEndian, &response.Version)
@@ -120,6 +124,7 @@ func ParseResponse(reader io.Reader) (*Response, error) {
 	return response, nil
 }
 
+// Length calculates the binary length of anchor response.
 func (r Response) Length() (length int) {
 	nameLength := len(r.DeviceName)
 	if nameLength > MaxDeviceName {

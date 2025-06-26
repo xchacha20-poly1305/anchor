@@ -1,4 +1,4 @@
-// Package tun2dialer provides Tun2Dialer to handle Tun.
+// Package tun2dialer routes tun connections to dialer.
 package tun2dialer
 
 import (

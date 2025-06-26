@@ -1,4 +1,3 @@
-// Package dialers provides implementations for N.Dialer.
 package dialers
 
 import (
