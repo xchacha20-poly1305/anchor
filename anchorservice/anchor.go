@@ -9,6 +9,7 @@ import (
 
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/buf"
+	E "github.com/sagernet/sing/common/exceptions"
 	"github.com/sagernet/sing/common/logger"
 	N "github.com/sagernet/sing/common/network"
 
@@ -85,7 +86,9 @@ func (a *Anchor) loop() {
 		_, source, err := buffer.ReadPacketFrom(a.packetConn)
 		if err != nil {
 			buffer.Release()
-			a.logger.WarnContext(a.ctx, "stop loop because: ", err)
+			if !E.IsClosedOrCanceled(err) {
+				a.logger.WarnContext(a.ctx, "stop loop because: ", err)
+			}
 			return
 		}
 		a.logger.DebugContext(a.ctx, "new packet from: ", source)
