@@ -75,7 +75,7 @@ func (s *SocksHttp) handle(conn net.Conn) {
 	done := make(chan struct{})
 	switch headByte[0] {
 	case socks4.Version, socks5.Version:
-		_ = socks.HandleConnectionEx(s.ctx, conn, reader, s.auth, s.detour, M.SocksaddrFromNet(conn.RemoteAddr()), func(_ error) {
+		_ = socks.HandleConnectionEx(s.ctx, conn, reader, s.auth, s.detour, nil, M.SocksaddrFromNet(conn.RemoteAddr()), func(_ error) {
 			close(done)
 		})
 	default:

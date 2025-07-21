@@ -3,10 +3,10 @@ module github.com/xchacha20-poly1305/anchor
 go 1.23.0
 
 require (
-	github.com/sagernet/sing v0.6.11
-	github.com/sagernet/sing-tun v0.6.9
+	github.com/sagernet/sing v0.7.0-beta.1
+	github.com/sagernet/sing-tun v0.6.10-0.20250721014417-ebbe32588cfb
 	go.uber.org/zap v1.27.0
-	golang.org/x/sys v0.33.0
+	golang.org/x/sys v0.34.0
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.76
 )
 

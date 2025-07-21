@@ -150,7 +150,7 @@ func (t *Tun2Dialer) connectionCopy(ctx context.Context, source, destination net
 					if done.Swap(true) {
 						tryOnClose(onClose, err)
 					}
-					common.Close(source, destination)
+					_ = common.Close(source, destination)
 					if !direction {
 						t.logger.ErrorContext(ctx, "connection upload payload: ", err)
 					} else {
@@ -169,20 +169,20 @@ func (t *Tun2Dialer) connectionCopy(ctx context.Context, source, destination net
 		}
 		break
 	}
-	_, err := bufio.CopyWithCounters(destinationWriter, sourceReader, source, readCounters, writeCounters)
+	_, err := bufio.CopyWithCounters(destinationWriter, sourceReader, source, readCounters, writeCounters, bufio.DefaultIncreaseBufferAfter, bufio.DefaultBatchSize)
 	if err != nil {
-		common.Close(source, destination)
+		_ = common.Close(source, destination)
 	} else if duplexDst, isDuplex := destination.(N.WriteCloser); isDuplex {
 		err = duplexDst.CloseWrite()
 		if err != nil {
-			common.Close(source, destination)
+			_ = common.Close(source, destination)
 		}
 	} else {
 		_ = destination.Close()
 	}
 	if done.Swap(true) {
 		tryOnClose(onClose, err)
-		common.Close(source, destination)
+		_ = common.Close(source, destination)
 	}
 	if !direction {
 		if err == nil {
