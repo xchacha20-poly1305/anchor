@@ -1,5 +1,5 @@
 NAME = anchor
-VERSION = v0.7.0
+VERSION = v0.7.1
 TAGS = "with_gvisor"
 PARAMS = -v -trimpath -ldflags "-s -w -buildid= -X main.version=$(VERSION)" -tags $(TAGS)
 MAIN = ./cmd/$(NAME)
