@@ -5,9 +5,11 @@ import (
 	"context"
 	"io"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/sagernet/sing-tun"
+	"github.com/sagernet/sing-tun/ping"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/atomic"
 	"github.com/sagernet/sing/common/bufio"
@@ -17,7 +19,7 @@ import (
 	"github.com/sagernet/sing/common/logger"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
-
+	"github.com/xchacha20-poly1305/anchor/dialers"
 	"github.com/xchacha20-poly1305/anchor/route"
 )
 
@@ -25,6 +27,7 @@ var _ tun.Handler = (*Tun2Dialer)(nil)
 
 // Tun2Dialer forwards tun connections to dialer.
 type Tun2Dialer struct {
+	ctx          context.Context
 	logger       logger.ContextLogger
 	dialer       N.Dialer
 	bypassLan    bool
@@ -34,7 +37,8 @@ type Tun2Dialer struct {
 }
 
 // NewTun2Dialer returns Tun2Dialer which forward to dialer.
-func NewTun2Dialer(ctx context.Context,
+func NewTun2Dialer(
+	ctx context.Context,
 	ctxLogger logger.ContextLogger,
 	tunOptions Options,
 	interfaceFinder control.InterfaceFinder,
@@ -48,6 +52,7 @@ func NewTun2Dialer(ctx context.Context,
 		ctxLogger = logger.NOP()
 	}
 	t := &Tun2Dialer{
+		ctx:        ctx,
 		logger:     ctxLogger,
 		dialer:     dialer,
 		bypassLan:  tunOptions.BypassLAN,
@@ -93,8 +98,16 @@ func (t *Tun2Dialer) Close() error {
 	)
 }
 
-func (t *Tun2Dialer) PrepareConnection(network string, source, destination M.Socksaddr) error {
-	return nil
+func (t *Tun2Dialer) PrepareConnection(network string, source, destination M.Socksaddr, routeContext tun.DirectRouteContext, timeout time.Duration) (tun.DirectRouteDestination, error) {
+	if !strings.Contains(network, N.NetworkICMP) {
+		return nil, nil
+	}
+	ctx := route.AppendInboundContext(t.ctx, &route.InboundContext{
+		Network:     network,
+		Source:      source,
+		Destination: destination,
+	})
+	return ping.ConnectDestination(t.ctx, t.logger, dialers.GetControlFunc(ctx, t.dialer), destination.Addr, routeContext, timeout)
 }
 
 func (t *Tun2Dialer) NewConnectionEx(ctx context.Context, conn net.Conn, source, destination M.Socksaddr, onClose N.CloseHandlerFunc) {

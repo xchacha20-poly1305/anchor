@@ -4,7 +4,6 @@ package main
 
 import (
 	E "github.com/sagernet/sing/common/exceptions"
-
 	"golang.org/x/sys/windows"
 )
 

@@ -1,4 +1,5 @@
 .idea/
 /anchor
+*.exe
 /*.syso
 /config.json

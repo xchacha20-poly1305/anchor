@@ -63,7 +63,7 @@ func (q Query) Length() (length int) {
 	length += 1 // Version
 	length += 1 // Device Name Length
 	length += len(q.DeviceName)
-	return
+	return length
 }
 
 // MarshalBinary uses buffer from buf. Please put bytes to pool after use.
@@ -136,7 +136,7 @@ func (r Response) Length() (length int) {
 	length += 1 // Device Name Length
 	length += nameLength
 	length += 2 // Socks Port
-	return
+	return length
 }
 
 // MarshalBinary uses buffer from buf. Please put bytes to pool after use.

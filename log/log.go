@@ -7,7 +7,6 @@ import (
 
 	F "github.com/sagernet/sing/common/format"
 	"github.com/sagernet/sing/common/logger"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

@@ -4,13 +4,18 @@ import (
 	"context"
 	"net"
 
+	"github.com/sagernet/sing/common"
+	"github.com/sagernet/sing/common/control"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
-
 	"github.com/xchacha20-poly1305/anchor/route"
 )
 
-var _ N.Dialer = (*Overridden)(nil)
+var (
+	_ N.Dialer            = (*Overridden)(nil)
+	_ common.WithUpstream = (*Overridden)(nil)
+	_ Controller          = (*Overridden)(nil)
+)
 
 // Overridden overrides destination.
 type Overridden struct {
@@ -44,6 +49,10 @@ func (o *Overridden) ListenPacket(ctx context.Context, destination M.Socksaddr) 
 
 func (o *Overridden) Upstream() any {
 	return o.dialer
+}
+
+func (o *Overridden) ControlFunc(ctx context.Context) control.Func {
+	return GetControlFunc(ctx, o.dialer)
 }
 
 func tryUpdateInboundContext(ctx context.Context, destination M.Socksaddr) {

@@ -23,7 +23,6 @@ import (
 	"github.com/sagernet/sing/common/json"
 	M "github.com/sagernet/sing/common/metadata"
 	"github.com/sagernet/sing/protocol/socks"
-
 	"github.com/xchacha20-poly1305/anchor"
 	"github.com/xchacha20-poly1305/anchor/dialers"
 	"github.com/xchacha20-poly1305/anchor/log"
@@ -224,6 +223,7 @@ func main() {
 	)
 
 	routedDialer := dialers.NewRouted(socksDialer)
+	routedDialer.AppendRule(route.BypassICMP(directDialer))
 	if selected.response.DnsPort > 0 {
 		routedDialer.AppendRule(route.UdpDnsPort(dialers.NewOverridden(socksDialer, func(destination M.Socksaddr) M.Socksaddr {
 			return M.Socksaddr{

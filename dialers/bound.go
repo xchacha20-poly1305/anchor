@@ -1,12 +1,19 @@
 package dialers
 
 import (
+	"context"
+
 	"github.com/sagernet/sing-tun"
+	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/control"
 	N "github.com/sagernet/sing/common/network"
 )
 
-var _ N.Dialer = (*bound)(nil)
+var (
+	_ N.Dialer            = (*bound)(nil)
+	_ common.WithUpstream = (*bound)(nil)
+	_ Controller          = (*bound)(nil)
+)
 
 type bound struct {
 	N.DefaultDialer
@@ -24,11 +31,11 @@ func NewBound(finder control.InterfaceFinder, monitor tun.DefaultInterfaceMonito
 			defaultInterface := monitor.DefaultInterface()
 			if defaultInterface == nil {
 				err = tun.ErrNoRoute
-				return
+				return name, index, err
 			}
 			name = defaultInterface.Name
 			index = defaultInterface.Index
-			return
+			return name, index, err
 		})
 	} else {
 		bindFunc = control.BindToInterface(finder, bindInterface, -1)
@@ -41,4 +48,8 @@ func NewBound(finder control.InterfaceFinder, monitor tun.DefaultInterfaceMonito
 
 func (r *bound) Upstream() any {
 	return r.DefaultDialer
+}
+
+func (r *bound) ControlFunc(ctx context.Context) control.Func {
+	return r.Dialer.Control
 }

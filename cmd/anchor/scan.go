@@ -7,7 +7,6 @@ import (
 
 	E "github.com/sagernet/sing/common/exceptions"
 	N "github.com/sagernet/sing/common/network"
-
 	"github.com/xchacha20-poly1305/anchor"
 	"github.com/xchacha20-poly1305/anchor/log"
 )
@@ -91,5 +90,5 @@ func listInterfaceAddr(logger *log.Logger) (interfaceWithAddrs []interfaceWithAd
 		}
 	}
 
-	return
+	return interfaceWithAddrs
 }

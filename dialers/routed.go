@@ -4,13 +4,18 @@ import (
 	"context"
 	"net"
 
+	"github.com/sagernet/sing/common"
+	"github.com/sagernet/sing/common/control"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
-
 	"github.com/xchacha20-poly1305/anchor/route"
 )
 
-var _ N.Dialer = (*Routed)(nil)
+var (
+	_ N.Dialer            = (*Routed)(nil)
+	_ common.WithUpstream = (*Routed)(nil)
+	_ Controller          = (*Routed)(nil)
+)
 
 // Routed is a dialer with custom route rules.
 type Routed struct {
@@ -43,10 +48,6 @@ func (r *Routed) AppendRule(routeFunc route.Func) {
 	r.routes = append(r.routes, routeFunc)
 }
 
-func (r *Routed) Upstream() any {
-	return r.dialer
-}
-
 func (r *Routed) matchDialer(ctx context.Context) N.Dialer {
 	inboundContext := route.InboundContextFrom(ctx)
 	if inboundContext == nil {
@@ -59,4 +60,13 @@ func (r *Routed) matchDialer(ctx context.Context) N.Dialer {
 		}
 	}
 	return r.dialer
+}
+
+func (r *Routed) Upstream() any {
+	return r.dialer
+}
+
+func (r *Routed) ControlFunc(ctx context.Context) control.Func {
+	dialer := r.matchDialer(ctx)
+	return GetControlFunc(ctx, dialer)
 }

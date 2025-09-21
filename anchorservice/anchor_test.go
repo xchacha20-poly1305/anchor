@@ -12,7 +12,6 @@ import (
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/buf"
 	N "github.com/sagernet/sing/common/network"
-
 	"github.com/xchacha20-poly1305/anchor"
 )
 

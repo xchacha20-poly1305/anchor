@@ -7,7 +7,6 @@ import (
 	"github.com/sagernet/sing/common/auth"
 	"github.com/sagernet/sing/common/json/badoption"
 	"github.com/sagernet/sing/common/logger"
-
 	"github.com/xchacha20-poly1305/anchor/tun2dialer"
 )
 

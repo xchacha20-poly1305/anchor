@@ -6,7 +6,6 @@ import (
 	"github.com/sagernet/sing/common"
 	E "github.com/sagernet/sing/common/exceptions"
 	"github.com/sagernet/sing/common/shell"
-
 	"kernel.org/pub/linux/libs/security/libcap/cap"
 )
 

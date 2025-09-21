@@ -3,6 +3,7 @@ package route
 
 import (
 	"context"
+	"strings"
 
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
@@ -68,6 +69,19 @@ func UdpDnsPort(dialer N.Dialer) Func {
 	return func(ctx *InboundContext) N.Dialer {
 		const dnsPort = 53
 		if ctx.Destination.Port != dnsPort {
+			return nil
+		}
+		return dialer
+	}
+}
+
+// BypassICMP bypass the ICMP network.
+func BypassICMP(dialer N.Dialer) Func {
+	if dialer == nil {
+		panic(nilDialer)
+	}
+	return func(ctx *InboundContext) N.Dialer {
+		if !strings.Contains(ctx.Network, N.NetworkICMP) {
 			return nil
 		}
 		return dialer

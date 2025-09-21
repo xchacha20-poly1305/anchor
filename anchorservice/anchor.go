@@ -12,7 +12,6 @@ import (
 	E "github.com/sagernet/sing/common/exceptions"
 	"github.com/sagernet/sing/common/logger"
 	N "github.com/sagernet/sing/common/network"
-
 	"github.com/xchacha20-poly1305/anchor"
 )
 
@@ -71,7 +70,7 @@ func (a *Anchor) Start() (err error) {
 	if notFirstStart {
 		return os.ErrExist
 	}
-	return
+	return err
 }
 
 func (a *Anchor) loop() {
