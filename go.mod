@@ -4,15 +4,16 @@ go 1.24.7
 
 require (
 	github.com/sagernet/sing v0.8.0-beta.3
-	github.com/sagernet/sing-tun v0.8.0-beta.10
-	go.uber.org/zap v1.27.0
-	golang.org/x/sys v0.36.0
-	kernel.org/pub/linux/libs/security/libcap/cap v1.2.76
+	github.com/sagernet/sing-tun v0.8.0-beta.17
+	go.uber.org/zap v1.27.1
+	golang.org/x/sys v0.41.0
+	kernel.org/pub/linux/libs/security/libcap/cap v1.2.77
 )
 
 // replace github.com/sagernet/sing-tun => ../sing-tun
 
 require (
+	github.com/florianl/go-nfqueue/v2 v2.0.2 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/google/btree v1.1.3 // indirect
@@ -31,5 +32,5 @@ require (
 	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
-	kernel.org/pub/linux/libs/security/libcap/psx v1.2.76 // indirect
+	kernel.org/pub/linux/libs/security/libcap/psx v1.2.77 // indirect
 )
