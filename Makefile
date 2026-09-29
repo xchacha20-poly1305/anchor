@@ -1,5 +1,5 @@
 NAME = anchor
-VERSION = v0.8.0
+VERSION = v0.9.0
 PARAMS = -v -trimpath -ldflags "-s -w -buildid= -X main.version=$(VERSION)"
 MAIN = ./cmd/$(NAME)
 
