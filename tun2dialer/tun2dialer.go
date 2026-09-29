@@ -5,10 +5,11 @@ import (
 	"context"
 	"io"
 	"net"
-	"strings"
+	"net/netip"
 	"time"
 
 	"github.com/sagernet/sing-tun"
+	"github.com/sagernet/sing-tun/gtcpip/header"
 	"github.com/sagernet/sing-tun/ping"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/atomic"
@@ -33,6 +34,7 @@ type Tun2Dialer struct {
 	bypassLan    bool
 	tunInterface tun.Tun
 	stack        tun.Stack
+	pingPort     *ping.Port
 	udpTimeout   time.Duration
 }
 
@@ -58,6 +60,7 @@ func NewTun2Dialer(
 		bypassLan:  tunOptions.BypassLAN,
 		udpTimeout: tunOptions.UDPTimeout,
 	}
+	t.pingPort = ping.NewPort(ctx, ctxLogger, t.pingControlFunc, 0)
 	t.tunInterface, err = tun.New(tunOptions.Options)
 	if err != nil {
 		return nil, E.Cause(err, "create tun")
@@ -95,20 +98,31 @@ func (t *Tun2Dialer) Close() error {
 	return common.Close(
 		t.tunInterface,
 		t.stack,
+		t.pingPort,
 	)
 }
 
-func (t *Tun2Dialer) PrepareConnection(network string, source, destination M.Socksaddr, routeContext tun.DirectRouteContext, timeout time.Duration) (tun.DirectRouteDestination, error) {
-	if !strings.Contains(network, N.NetworkICMP) {
-		return nil, nil
+// JudgeFlow forwards ICMP echo to pingPort and lets the stack accept TCP and UDP,
+// which then arrive at NewConnectionEx and NewPacketConnectionEx.
+func (t *Tun2Dialer) JudgeFlow(network uint8, _, _ netip.AddrPort, _ []byte) tun.FlowVerdict {
+	switch network {
+	case uint8(header.ICMPv4ProtocolNumber), uint8(header.ICMPv6ProtocolNumber):
+		return tun.FlowVerdict{Action: tun.ActionFlow, Port: t.pingPort}
+	default:
+		return tun.FlowVerdict{Action: tun.ActionAccept}
 	}
-	ctx := route.AppendInboundContext(t.ctx, &route.InboundContext{
-		Network:     network,
-		Source:      source,
-		Destination: destination,
-	})
-	return ping.ConnectDestination(t.ctx, t.logger, dialers.GetControlFunc(ctx, t.dialer), destination.Addr, routeContext, timeout)
 }
+
+func (t *Tun2Dialer) pingControlFunc(destination netip.Addr) control.Func {
+	ctx := route.AppendInboundContext(t.ctx, &route.InboundContext{
+		Network:     N.NetworkICMP,
+		Destination: M.SocksaddrFrom(destination, 0),
+	})
+	return dialers.GetControlFunc(ctx, t.dialer)
+}
+
+// NewDNSPacket is never called because JudgeFlow does not return tun.ActionHijackDNS.
+func (t *Tun2Dialer) NewDNSPacket(_ []byte, _, _ M.Socksaddr, _ N.PacketWriter) {}
 
 func (t *Tun2Dialer) NewConnectionEx(ctx context.Context, conn net.Conn, source, destination M.Socksaddr, onClose N.CloseHandlerFunc) {
 	t.logger.InfoContext(ctx, "inbound connection from ", source)

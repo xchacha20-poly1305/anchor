@@ -18,6 +18,6 @@ type Options struct {
 const (
 	UDPTimeout = 5 * time.Minute
 	MTU        = 9000
-	Stack      = "mixed"
+	Stack      = "go"
 	DNSServer  = "8.8.8.8"
 )

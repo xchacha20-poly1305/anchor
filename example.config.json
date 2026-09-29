@@ -1,6 +1,6 @@
 {
   "interface_name": "utun8",
-  "stack": "mixed",
+  "stack": "go",
   "mtu": 9000,
   "gso": true,
   "auto_route": true,

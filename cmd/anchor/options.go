@@ -59,8 +59,9 @@ func (o *Options) ForTun2Dialer(ctxLogger logger.ContextLogger, interfaceMonitor
 			Inet6Address:             o.Inet6Address,
 			MTU:                      o.MTU,
 			GSO:                      o.GSO,
+			MultiQueue:               true, // Falls back to single queue if unsupported.
 			AutoRoute:                *o.AutoRoute,
-			DNSServers:               dnsServers,
+			DNSAddress:               dnsServers,
 			StrictRoute:              o.StrictRoute,
 			Inet4RouteAddress:        o.Inet4RouteAddress,
 			Inet6RouteAddress:        o.Inet6RouteAddress,
