@@ -1,12 +1,12 @@
 module github.com/xchacha20-poly1305/anchor
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/sagernet/sing v0.9.5-0.20260917142815-f37989cadbf0
 	github.com/sagernet/sing-tun v0.9.7-0.20260928201554-f9cf98a84fda
-	go.uber.org/zap v1.27.1
-	golang.org/x/sys v0.47.0
+	go.uber.org/zap v1.28.0
+	golang.org/x/sys v0.48.0
 )
 
 // replace github.com/sagernet/sing-tun => ../sing-tun
